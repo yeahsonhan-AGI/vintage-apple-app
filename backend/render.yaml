@@ -2,10 +2,21 @@ services:
   - type: web
     name: qdraw-os-backend
     env: node
-    buildCommand: npm run build
+    region: oregon
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
+      - key: SUPABASE_URL
+        value: https://ppscyobejqvkthfifvwo.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwc2N5b2JlanF2a3RoZmlmdndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODE2ODcsImV4cCI6MjA5MDE1NzY4N30._UruF-SGF5ogpg2oTp3Cxg8i2WY3A5J-QqKTX5IrW6k
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwc2N5b2JlanF2a3RoZmlmdndvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU4MTY4NywiZXhwIjoyMDkwMTU3Njg3fQ.UngKj4E0YNTmmjSe1wfNgVSg_OHfZKsKHBs72p11xV8
+      - key: JWT_SECRET
+        value: T5xLmHMFUV4lyXStADWfAbA5mskpHPKprZHAKIwIFVI=
+      - key: GLM_API_KEY
+        value: 1b85485cf2eb451cbc91b1e9f2de290f.GJrax6HGogvABWoJ
