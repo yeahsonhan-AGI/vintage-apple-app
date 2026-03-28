@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Q-Draw OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <img src="/photos/logo.png" alt="Logo">
+            </div>
+            <h1 class="auth-title">Welcome to Q-Draw OS ✨</h1>
+            <p class="auth-subtitle">Your personal space for notes, calendar & food tracking</p>
+
+            <div class="auth-form">
+                <div id="authTabs">
+                    <button class="auth-tab active" data-tab="signin">Sign In</button>
+                    <button class="auth-tab" data-tab="signup">Sign Up</button>
+                </div>
+
+                <form id="signinForm" class="auth-form-content active">
+                    <input type="email" id="signinEmail" placeholder="Email" required>
+                    <input type="password" id="signinPassword" placeholder="Password" required>
+                    <button type="submit" class="auth-btn">Sign In 🚀</button>
+                </form>
+
+                <form id="signupForm" class="auth-form-content">
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                    <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+                    <button type="submit" class="auth-btn">Create Account ✨</button>
+                </form>
+
+                <div id="authError" class="auth-error"></div>
+                <div id="authSuccess" class="auth-success"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until authenticated) -->
+    <div id="mainApp" class="main-app" style="display: none;">
+        <!-- Desktop Background -->
+        <div class="desktop">
+            <!-- Floating Notes Container -->
+            <div class="floating-notes" id="floatingNotes"></div>
+
+            <!-- Desktop Logo -->
+            <div class="desktop-logo">
+                <div class="logo-glow"></div>
+                <div class="logo-title">Yason's APP</div>
+                <img src="/photos/logo.png" alt="Logo">
+            </div>
+
+            <!-- Music Player -->
+            <div class="music-player">
+                <button class="music-btn" id="musicPlayBtn" onclick="toggleMusic()">
+                    <span class="music-icon">🎵</span>
+                </button>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock-container">
+                <div class="dock-scroll" id="dockScroll">
+                    <div class="dock-item" data-app="grid">
+                        <div class="dock-icon more-icon"></div>
+                        <span class="dock-label">More</span>
+                    </div>
+
+                    <div class="dock-item" data-app="notes">
+                        <div class="dock-icon notes-icon"></div>
+                        <span class="dock-label">Notes</span>
+                    </div>
+
+                    <div class="dock-item" data-app="youtube">
+                        <div class="dock-icon youtube-icon"></div>
+                        <span class="dock-label">YouTube</span>
+                    </div>
+
+                    <div class="dock-item" data-app="camera">
+                        <div class="dock-icon camera-icon"></div>
+                        <span class="dock-label">Food</span>
+                    </div>
+
+                    <div class="dock-item" data-app="calendar">
+                        <div class="dock-icon calendar-icon"></div>
+                        <span class="dock-label">Calendar</span>
+                    </div>
+
+                    <div class="dock-item" data-app="icons">
+                        <div class="dock-icon icons-icon"></div>
+                        <span class="dock-label">Icons</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <div class="user-menu">
+                <button class="user-btn" id="userBtn">
+                    <span class="user-avatar">👤</span>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="user-logout-btn" onclick="handleSignOut()">Sign Out 🚪</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Grid Overlay -->
+        <div class="app-grid-overlay" id="appGridOverlay">
+            <div class="app-grid-header">
+                <h1>All Apps ✨</h1>
+                <button class="close-grid-btn" onclick="closeAppGrid()">✕</button>
+            </div>
+            <div class="app-grid" id="appGrid">
+                <!-- Apps will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Mini App Overlay -->
+        <div class="mini-app-overlay" id="miniAppOverlay">
+            <div class="mini-app-window">
+                <div class="mini-app-title-bar">
+                    <div class="mini-app-title">
+                        <span class="mini-app-icon" id="miniAppIcon"></span>
+                        <span id="miniAppName"></span>
+                    </div>
+                    <button class="mini-app-close-btn" onclick="closeMiniApp()">✕</button>
+                </div>
+                <div class="mini-app-content" id="miniAppContent">
+                    <!-- App content will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Modal -->
+        <div class="download-modal" id="downloadModal" onclick="closeDownloadModal(event)">
+            <div class="download-modal-content">
+                <div class="download-modal-title">Download? 📥</div>
+                <div class="download-modal-preview">
+                    <img id="downloadPreview" src="" alt="Thumbnail preview">
+                </div>
+                <div class="download-modal-actions">
+                    <button class="download-modal-btn confirm" onclick="confirmDownload()">Yes!</button>
+                    <button class="download-modal-btn cancel" onclick="closeDownloadModal()">No</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>
