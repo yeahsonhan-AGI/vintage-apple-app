@@ -1072,7 +1072,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                     placeholder="Paste channel URL... (e.g., youtube.com/@username)"
                     value={channelUrl}
                     onChange={(e) => setChannelUrl(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && loadChannelVideos()}
+                    onKeyPress={(e) => { if (e.key === 'Enter') loadChannelVideos() }}
                   />
                   <button
                     className={`youtube-load-btn ${isLoadingVideos ? 'loading' : ''}`}
@@ -1258,7 +1258,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                       placeholder="Add a new task..."
                       value={newTodoTitle}
                       onChange={(e) => setNewTodoTitle(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && createTodo()}
+                      onKeyPress={(e) => { if (e.key === 'Enter') createTodo() }}
                     />
                     <button className="todo-add-btn" onClick={createTodo}>
                       +
@@ -1299,7 +1299,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                     placeholder="Describe your icon... (e.g., 'cute cat', 'magic wand')"
                     value={iconPrompt}
                     onChange={(e) => setIconPrompt(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && generateIcon()}
+                    onKeyPress={(e) => { if (e.key === 'Enter') generateIcon() }}
                   />
                   <button
                     className={`icon-generate-btn ${isGenerating ? 'generating' : ''}`}
