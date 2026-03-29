@@ -778,21 +778,36 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
   }
 
   const createFitnessWorkout = async () => {
+    console.log('=== Creating Fitness Workout ===')
+    console.log('Training type:', fitnessTrainingType)
+    console.log('Date:', fitnessDate)
+
     const dateKey = formatDateKey(fitnessDate)
+    console.log('Date key:', dateKey)
+
     const response = await api.createWorkoutPlan({
       date_key: dateKey,
       training_type: fitnessTrainingType,
     })
+
+    console.log('API Response:', response)
+    console.log('Response success:', response.success)
+    console.log('Response data:', response.data)
+
     if (response.success && response.data) {
       try {
         const nestedData = response.data as any
         const newPlan = nestedData?.workoutPlan
+        console.log('New workout plan:', newPlan)
         setCurrentWorkoutPlan(newPlan || null)
         loadWorkoutPlans()
         showToast(`${fitnessTrainingType === 'strength' ? 'Strength' : 'Cardio'} workout created!`)
       } catch (e) {
         console.error('Failed to parse workout plan:', e)
       }
+    } else {
+      console.error('Failed to create workout plan:', response.error)
+      showToast(`Failed to create workout: ${response.error || 'Unknown error'}`, 'error')
     }
   }
 
