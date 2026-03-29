@@ -10,6 +10,7 @@ class ApiClient {
     try {
       const token = localStorage.getItem('token')
       console.log(`API Request: ${endpoint}`, token ? 'has token' : 'NO TOKEN')
+      console.log(`Full URL: ${API_URL}${endpoint}`)
 
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
@@ -31,6 +32,7 @@ class ApiClient {
       return data as ApiResponse<T>
     } catch (error) {
       console.error(`API Exception:`, error)
+      console.error(`Exception details:`, (error as Error).message, (error as Error).stack)
       return { success: false, error: (error as Error).message }
     }
   }

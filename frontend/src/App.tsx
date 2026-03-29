@@ -76,10 +76,13 @@ function App() {
   }
 
   const handleAuthSuccess = (userData: { user: { id: string; email: string }; token: string }) => {
+    console.log('Auth success!', userData)
     localStorage.setItem('token', userData.token)
     localStorage.setItem('user', JSON.stringify(userData.user))
     setIsAuthenticated(true)
     setUser(userData.user)
+    console.log('Token saved:', localStorage.getItem('token') ? 'YES' : 'NO')
+    console.log('User saved:', localStorage.getItem('user'))
   }
 
   const handleSignOut = () => {

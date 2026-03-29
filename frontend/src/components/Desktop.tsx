@@ -37,6 +37,8 @@ interface FoodLog {
 }
 
 export default function Desktop({ user, onSignOut }: DesktopProps) {
+  console.log('Desktop rendered with user:', user)
+
   const [activeApp, setActiveApp] = useState<string | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -584,14 +586,19 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
   // Food tracker functions
   const loadFoodLogs = async () => {
+    console.log('Loading food logs for date:', formatDateKey(selectedFoodDate))
     const dateKey = formatDateKey(selectedFoodDate)
     const response = await api.getFoodLogs(dateKey)
+
+    console.log('Food logs response:', response)
 
     if (response.success && response.data) {
       // response.data is now directly the array from backend
       const logs = Array.isArray(response.data) ? response.data : []
       setFoodLogs(logs)
+      console.log('Food logs loaded:', logs.length, 'items')
     } else {
+      console.log('Failed to load food logs:', response.error)
       setFoodLogs([])
     }
   }
