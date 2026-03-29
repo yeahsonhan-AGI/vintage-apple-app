@@ -6,26 +6,44 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 function getUserId(req: VercelRequest): string | null {
+  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
+
   // Try both lowercase and uppercase header names
   const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined
   console.log('Auth header present:', !!authHeader)
+  console.log('Auth header value:', authHeader ? authHeader.substring(0, 50) + '...' : 'none')
+
   const token = authHeader && authHeader.split(' ')[1]
   console.log('Token extracted:', !!token)
+  console.log('Token value:', token ? token.substring(0, 20) + '...' : 'none')
 
-  if (!token) return null
+  if (!token) {
+    console.log('No token found, returning null')
+    return null
+  }
 
   try {
     const jwt = require('jsonwebtoken')
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { userId: string }
+    const jwtSecret = process.env.JWT_SECRET || ''
+    console.log('JWT Secret length:', jwtSecret.length)
+
+    const decoded = jwt.verify(token, jwtSecret) as { userId: string }
     console.log('Token verified, userId:', decoded.userId)
     return decoded.userId
-  } catch (error) {
-    console.error('Token verification failed:', error)
+  } catch (error: any) {
+    console.error('Token verification failed:', error.message)
+    console.error('Error name:', error.name)
     return null
   }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Log all headers for debugging
+  console.log('=== Notes API Request ===')
+  console.log('Method:', req.method)
+  console.log('URL:', req.url)
+  console.log('All headers:', JSON.stringify(req.headers, null, 2))
+
   // Handle CORS
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -35,7 +53,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const userId = getUserId(req)
+  console.log('User ID from token:', userId)
+
   if (!userId) {
+    console.log('ERROR: No userId found, returning 401')
     return res.status(401).json({ error: 'Access token required' })
   }
 
