@@ -28,7 +28,6 @@ class ApiClient {
       }
 
       console.log(`API Success: ${endpoint}`, data)
-      // Return the backend response directly - backend already returns { success: true, data: ... }
       return data as ApiResponse<T>
     } catch (error) {
       console.error(`API Exception:`, error)
@@ -88,33 +87,33 @@ class ApiClient {
 
   // Calendar Todos
   async getTodos(dateKey?: string) {
-    const url = dateKey ? `/calendar/todos?date=${dateKey}` : '/calendar/todos'
+    const url = dateKey ? `/calendar?date=${dateKey}` : '/calendar'
     return this.request(url)
   }
 
   async createTodo(todo: { date_key: string; title: string }) {
-    return this.request('/calendar/todos', {
+    return this.request('/calendar', {
       method: 'POST',
       body: JSON.stringify(todo),
     })
   }
 
   async updateTodo(id: string, updates: { completed?: boolean; title?: string }) {
-    return this.request(`/calendar/todos/${id}`, {
+    return this.request(`/calendar/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     })
   }
 
   async deleteTodo(id: string) {
-    return this.request(`/calendar/todos/${id}`, {
+    return this.request(`/calendar/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Food Logs
   async getFoodLogs(dateKey?: string) {
-    const url = dateKey ? `/food/logs?date=${dateKey}` : '/food/logs'
+    const url = dateKey ? `/food?date=${dateKey}` : '/food'
     return this.request(url)
   }
 
@@ -126,20 +125,20 @@ class ApiClient {
     image: string
     meal_type: string
   }) {
-    return this.request('/food/logs', {
+    return this.request('/food', {
       method: 'POST',
       body: JSON.stringify(log),
     })
   }
 
   async deleteFoodLog(id: string) {
-    return this.request(`/food/logs/${id}`, {
+    return this.request(`/food/${id}`, {
       method: 'DELETE',
     })
   }
 
   async getDailySummary(dateKey: string) {
-    return this.request(`/food/summary/${dateKey}`)
+    return this.request(`/food/${dateKey}`)
   }
 
   // Analyze food image with AI
@@ -152,12 +151,12 @@ class ApiClient {
 
   // Fitness - Workout Plans
   async getWorkoutPlans(dateKey?: string) {
-    const url = dateKey ? `/fitness/plans?date=${dateKey}` : '/fitness/plans'
+    const url = dateKey ? `/fitness?date=${dateKey}` : '/fitness'
     return this.request(url)
   }
 
   async createWorkoutPlan(plan: { date_key: string; training_type: 'cardio' | 'strength' }) {
-    return this.request('/fitness/plans', {
+    return this.request('/fitness', {
       method: 'POST',
       body: JSON.stringify(plan),
     })
@@ -174,14 +173,14 @@ class ApiClient {
     weight?: number
     notes?: string
   }) {
-    return this.request('/fitness/strength-exercises', {
+    return this.request('/fitness/strength', {
       method: 'POST',
       body: JSON.stringify(exercise),
     })
   }
 
   async deleteStrengthExercise(id: string) {
-    return this.request(`/fitness/strength-exercises/${id}`, {
+    return this.request(`/fitness/strength/${id}`, {
       method: 'DELETE',
     })
   }
@@ -196,21 +195,21 @@ class ApiClient {
     intensity_level?: string
     notes?: string
   }) {
-    return this.request('/fitness/cardio-exercises', {
+    return this.request('/fitness/cardio', {
       method: 'POST',
       body: JSON.stringify(exercise),
     })
   }
 
   async deleteCardioExercise(id: string) {
-    return this.request(`/fitness/cardio-exercises/${id}`, {
+    return this.request(`/fitness/cardio/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Fitness - Statistics
   async getFitnessStats(period: 'week' | 'month' = 'week') {
-    return this.request(`/fitness/stats?period=${period}`)
+    return this.request(`/fitness?period=${period}`)
   }
 }
 
