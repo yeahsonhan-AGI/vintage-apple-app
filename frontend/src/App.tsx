@@ -10,21 +10,70 @@ function App() {
 
   // Check if user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
+    const checkAuth = () => {
+      // Check URL params for email confirmation token
+      const urlParams = new URLSearchParams(window.location.search)
+      const confirmToken = urlParams.get('token')
+      const error = urlParams.get('error')
 
-    if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-        setIsAuthenticated(true)
-      } catch (e) {
-        console.error('Failed to parse saved user:', e)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+      if (confirmToken) {
+        // User just confirmed email, save token and clear URL
+        localStorage.setItem('token', confirmToken)
+        // Get user info with the token
+        fetchUserInfo(confirmToken)
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname)
+        return
       }
+
+      if (error) {
+        console.error('Email confirmation error:', error)
+        setLoading(false)
+        return
+      }
+
+      // Check for existing session
+      const token = localStorage.getItem('token')
+      const savedUser = localStorage.getItem('user')
+
+      if (token && savedUser) {
+        try {
+          setUser(JSON.parse(savedUser))
+          setIsAuthenticated(true)
+        } catch (e) {
+          console.error('Failed to parse saved user:', e)
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      }
+      setLoading(false)
     }
-    setLoading(false)
+
+    checkAuth()
   }, [])
+
+  const fetchUserInfo = async (token: string) => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data?.user) {
+          localStorage.setItem('user', JSON.stringify(data.data.user))
+          setUser(data.data.user)
+          setIsAuthenticated(true)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user info:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleAuthSuccess = (userData: { user: { id: string; email: string }; token: string }) => {
     localStorage.setItem('token', userData.token)

@@ -19,6 +19,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   try {
+    // GET /api/auth/callback - Email confirmation callback
+    if (action === 'callback' && req.method === 'GET') {
+      const { access_token, refresh_token, error } = req.query as any
+
+      if (error) {
+        return res.redirect(`/?error=${error}&error_description=${req.query.error_description}`)
+      }
+
+      if (!access_token) {
+        return res.redirect('/?error=no_token')
+      }
+
+      // Set session and redirect
+      return res.redirect(`/?token=${access_token}`)
+    }
+
     // POST /api/auth/signup
     if (action === 'signup' && req.method === 'POST') {
       const { email, password } = req.body
@@ -31,22 +47,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Password must be at least 6 characters' })
       }
 
+      // Sign up with auto-login (disable email confirmation for demo)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${process.env.FRONTEND_URL || 'https://frontend-beige-sigma-71.vercel.app'}/auth/callback`
+          emailRedirectTo: `${process.env.FRONTEND_URL || 'https://frontend-beige-sigma-71.vercel.app'}/auth/callback`,
+          data: {
+            skipEmailConfirmation: true
+          }
         }
       })
 
       if (authError) {
+        // If user already exists, try to sign them in instead
+        if (authError.message.includes('already registered') || authError.message.includes('already been registered')) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          })
+
+          if (signInError) {
+            return res.status(400).json({ error: signInError.message })
+          }
+
+          if (!signInData.user) {
+            return res.status(400).json({ error: 'Failed to sign in' })
+          }
+
+          const token = generateToken(signInData.user.id, signInData.user.email || '')
+
+          return res.json({
+            success: true,
+            data: {
+              user: {
+                id: signInData.user.id,
+                email: signInData.user.email,
+              },
+              token,
+            },
+          })
+        }
         return res.status(400).json({ error: authError.message })
+      }
+
+      // If sign up succeeded and user is confirmed (or auto-confirmed), return token
+      if (authData.user) {
+        const token = generateToken(authData.user.id, authData.user.email || '')
+
+        return res.json({
+          success: true,
+          data: {
+            user: {
+              id: authData.user.id,
+              email: authData.user.email,
+            },
+            token,
+          },
+        })
       }
 
       return res.status(201).json({
         success: true,
-        message: 'Please check your email to confirm your account',
-        requiresConfirmation: true
+        message: 'Account created successfully',
+        requiresConfirmation: false
       })
     }
 
