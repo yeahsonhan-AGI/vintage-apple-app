@@ -746,13 +746,17 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
     const dateKey = formatDateKey(fitnessDate)
     const response = await api.getWorkoutPlans(dateKey)
 
+    console.log('loadWorkoutPlans - response:', response)
+
     if (response.success && response.data) {
       try {
-        // Backend returns { success: true, data: { workoutPlans: [...] } }
-        const nestedData = response.data as any
-        const plans = nestedData?.workoutPlans || []
+        // Backend returns { success: true, data: [...] } - data is directly an array
+        const plans = Array.isArray(response.data) ? response.data : []
+        console.log('Loaded plans:', plans.length, 'for date:', dateKey)
         setWorkoutPlans(plans)
-        const existingPlan = plans.find((p: any) => p?.training_type === fitnessTrainingType)
+        // Find plan matching current training type for today's date
+        const existingPlan = plans.find((p: any) => p?.training_type === fitnessTrainingType && p?.date_key === dateKey)
+        console.log('Existing plan for', fitnessTrainingType, ':', existingPlan)
         setCurrentWorkoutPlan(existingPlan || null)
       } catch (e) {
         console.error('Failed to parse workout plans:', e)
@@ -760,6 +764,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
         setCurrentWorkoutPlan(null)
       }
     } else {
+      console.log('loadWorkoutPlans - no success or data')
       setWorkoutPlans([])
       setCurrentWorkoutPlan(null)
     }
@@ -767,10 +772,13 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
   const loadFitnessStats = async () => {
     const response = await api.getFitnessStats('week')
+    console.log('loadFitnessStats - response:', response)
     if (response.success && response.data) {
       try {
-        const nestedData = response.data as any
-        setFitnessStats(nestedData?.stats || null)
+        // Backend returns { success: true, data: {...} } - data is directly the stats object
+        const stats = typeof response.data === 'object' && !Array.isArray(response.data) ? response.data : null
+        console.log('Loaded stats:', stats)
+        setFitnessStats(stats)
       } catch (e) {
         console.error('Failed to parse stats:', e)
       }
@@ -796,8 +804,8 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
     if (response.success && response.data) {
       try {
-        const nestedData = response.data as any
-        const newPlan = nestedData?.workoutPlan
+        // Backend returns { success: true, data: {...} } - data is directly the plan object
+        const newPlan = response.data
         console.log('New workout plan:', newPlan)
         setCurrentWorkoutPlan(newPlan || null)
         loadWorkoutPlans()
@@ -1423,14 +1431,14 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                 <div className="fitness-tabs">
                   <button
                     className={`fitness-tab ${fitnessTrainingType === 'strength' ? 'active' : ''}`}
-                    onClick={() => { setFitnessTrainingType('strength'); setCurrentWorkoutPlan(null); }}
+                    onClick={() => { setFitnessTrainingType('strength'); }}
                   >
                     <StrengthTypeIcon size={28} className="fitness-tab-icon" />
                     <span>Strength</span>
                   </button>
                   <button
                     className={`fitness-tab ${fitnessTrainingType === 'cardio' ? 'active' : ''}`}
-                    onClick={() => { setFitnessTrainingType('cardio'); setCurrentWorkoutPlan(null); }}
+                    onClick={() => { setFitnessTrainingType('cardio'); }}
                   >
                     <CardioTypeIcon size={28} className="fitness-tab-icon" />
                     <span>Cardio</span>
