@@ -240,13 +240,18 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
   // Load data when apps open
   useEffect(() => {
+    console.log('activeApp changed to:', activeApp)
     if (activeApp === 'notes') {
+      console.log('Loading notes...')
       loadNotes()
     } else if (activeApp === 'calendar') {
+      console.log('Loading todos...')
       loadTodos()
     } else if (activeApp === 'camera') {
+      console.log('Loading food logs...')
       loadFoodLogs()
     } else if (activeApp === 'fitness') {
+      console.log('Loading workout plans...')
       loadWorkoutPlans()
       loadFitnessStats()
     }
@@ -1752,19 +1757,19 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
           <MoreIcon size={56} className="dock-icon" />
           <span className="dock-label">More</span>
         </div>
-        <div className="dock-item" onClick={() => setActiveApp('notes')}>
+        <div className="dock-item" onClick={() => { console.log('Notes clicked'); setActiveApp('notes'); }}>
           <NotesIcon size={56} className="dock-icon" />
           <span className="dock-label">Notes</span>
         </div>
-        <div className="dock-item" onClick={() => setActiveApp('camera')}>
+        <div className="dock-item" onClick={() => { console.log('Food clicked'); setActiveApp('camera'); }}>
           <FoodIcon size={56} className="dock-icon" />
           <span className="dock-label">Food</span>
         </div>
-        <div className="dock-item" onClick={() => setActiveApp('calendar')}>
+        <div className="dock-item" onClick={() => { console.log('Calendar clicked'); setActiveApp('calendar'); }}>
           <CalendarIcon size={56} className="dock-icon" />
           <span className="dock-label">To do</span>
         </div>
-        <div className="dock-item" onClick={() => setActiveApp('fitness')}>
+        <div className="dock-item" onClick={() => { console.log('Fitness clicked'); setActiveApp('fitness'); }}>
           <FitnessIcon size={56} className="dock-icon" />
           <span className="dock-label">Fitness</span>
         </div>
