@@ -1,6 +1,6 @@
 import type { ApiResponse } from '../types'
 
-const API_URL = '/api'
+const API_URL = import.meta.env.DEV ? 'http://localhost:3000/api' : '/api'
 
 class ApiClient {
   private async request<T>(
@@ -87,33 +87,33 @@ class ApiClient {
 
   // Calendar Todos
   async getTodos(dateKey?: string) {
-    const url = dateKey ? `/calendar?date=${dateKey}` : '/calendar'
+    const url = dateKey ? `/calendar/todos?date=${dateKey}` : '/calendar/todos'
     return this.request(url)
   }
 
   async createTodo(todo: { date_key: string; title: string }) {
-    return this.request('/calendar', {
+    return this.request('/calendar/todos', {
       method: 'POST',
       body: JSON.stringify(todo),
     })
   }
 
   async updateTodo(id: string, updates: { completed?: boolean; title?: string }) {
-    return this.request(`/calendar/${id}`, {
+    return this.request(`/calendar/todos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     })
   }
 
   async deleteTodo(id: string) {
-    return this.request(`/calendar/${id}`, {
+    return this.request(`/calendar/todos/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Food Logs
   async getFoodLogs(dateKey?: string) {
-    const url = dateKey ? `/food?date=${dateKey}` : '/food'
+    const url = dateKey ? `/food/logs?date=${dateKey}` : '/food/logs'
     return this.request(url)
   }
 
@@ -125,20 +125,20 @@ class ApiClient {
     image: string
     meal_type: string
   }) {
-    return this.request('/food', {
+    return this.request('/food/logs', {
       method: 'POST',
       body: JSON.stringify(log),
     })
   }
 
   async deleteFoodLog(id: string) {
-    return this.request(`/food/${id}`, {
+    return this.request(`/food/logs/${id}`, {
       method: 'DELETE',
     })
   }
 
   async getDailySummary(dateKey: string) {
-    return this.request(`/food/${dateKey}`)
+    return this.request(`/food/summary/${dateKey}`)
   }
 
   // Analyze food image with AI
@@ -151,12 +151,12 @@ class ApiClient {
 
   // Fitness - Workout Plans
   async getWorkoutPlans(dateKey?: string) {
-    const url = dateKey ? `/fitness?date=${dateKey}` : '/fitness'
+    const url = dateKey ? `/fitness/plans?date=${dateKey}` : '/fitness/plans'
     return this.request(url)
   }
 
   async createWorkoutPlan(plan: { date_key: string; training_type: 'cardio' | 'strength' }) {
-    return this.request('/fitness', {
+    return this.request('/fitness/plans', {
       method: 'POST',
       body: JSON.stringify(plan),
     })
@@ -173,14 +173,14 @@ class ApiClient {
     weight?: number
     notes?: string
   }) {
-    return this.request('/fitness/strength', {
+    return this.request('/fitness/strength-exercises', {
       method: 'POST',
       body: JSON.stringify(exercise),
     })
   }
 
   async deleteStrengthExercise(id: string) {
-    return this.request(`/fitness/strength/${id}`, {
+    return this.request(`/fitness/strength-exercises/${id}`, {
       method: 'DELETE',
     })
   }
@@ -195,21 +195,21 @@ class ApiClient {
     intensity_level?: string
     notes?: string
   }) {
-    return this.request('/fitness/cardio', {
+    return this.request('/fitness/cardio-exercises', {
       method: 'POST',
       body: JSON.stringify(exercise),
     })
   }
 
   async deleteCardioExercise(id: string) {
-    return this.request(`/fitness/cardio/${id}`, {
+    return this.request(`/fitness/cardio-exercises/${id}`, {
       method: 'DELETE',
     })
   }
 
   // Fitness - Statistics
   async getFitnessStats(period: 'week' | 'month' = 'week') {
-    return this.request(`/fitness?period=${period}`)
+    return this.request(`/fitness/stats?period=${period}`)
   }
 }
 

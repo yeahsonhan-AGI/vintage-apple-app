@@ -251,6 +251,14 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeApp])
 
+  // Load food logs when date changes
+  useEffect(() => {
+    if (activeApp === 'camera') {
+      loadFoodLogs()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFoodDate])
+
   // YouTube Channel - Extract channel ID from URL and load recent videos
   const extractChannelId = (url: string): string | null => {
     // Handle different YouTube URL formats
@@ -1146,13 +1154,13 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
             {activeApp === 'camera' && (
               <div className="food-tracker-app">
                 <div className="food-header">
-                  <button className="food-date-nav" onClick={() => { selectedFoodDate.setDate(selectedFoodDate.getDate() - 1); setSelectedFoodDate(new Date(selectedFoodDate)); loadFoodLogs(); }}>
+                  <button className="food-date-nav" onClick={() => { const newDate = new Date(selectedFoodDate); newDate.setDate(newDate.getDate() - 1); setSelectedFoodDate(newDate); }}>
                     ‹
                   </button>
                   <div className="food-date">
                     {selectedFoodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
-                  <button className="food-date-nav" onClick={() => { selectedFoodDate.setDate(selectedFoodDate.getDate() + 1); setSelectedFoodDate(new Date(selectedFoodDate)); loadFoodLogs(); }}>
+                  <button className="food-date-nav" onClick={() => { const newDate = new Date(selectedFoodDate); newDate.setDate(newDate.getDate() + 1); setSelectedFoodDate(newDate); }}>
                     ›
                   </button>
                 </div>
