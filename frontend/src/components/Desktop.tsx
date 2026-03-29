@@ -753,10 +753,24 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
         // Backend returns { success: true, data: [...] } - data is directly an array
         const plans = Array.isArray(response.data) ? response.data : []
         console.log('Loaded plans:', plans.length, 'for date:', dateKey)
+        console.log('Plans:', plans)
         setWorkoutPlans(plans)
-        // Find plan matching current training type for today's date
-        const existingPlan = plans.find((p: any) => p?.training_type === fitnessTrainingType && p?.date_key === dateKey)
-        console.log('Existing plan for', fitnessTrainingType, ':', existingPlan)
+
+        // First, try to find a plan for today's date with matching training type
+        let existingPlan = plans.find((p: any) => p?.training_type === fitnessTrainingType && p?.date_key === dateKey)
+
+        // If no plan for today, find the most recent plan of this training type
+        if (!existingPlan && plans.length > 0) {
+          const sameTypePlans = plans.filter((p: any) => p?.training_type === fitnessTrainingType)
+          if (sameTypePlans.length > 0) {
+            // Sort by date descending and get the first (most recent)
+            sameTypePlans.sort((a: any, b: any) => new Date(b.date_key).getTime() - new Date(a.date_key).getTime())
+            existingPlan = sameTypePlans[0]
+            console.log('Using most recent plan from:', existingPlan.date_key)
+          }
+        }
+
+        console.log('Selected plan for', fitnessTrainingType, ':', existingPlan)
         setCurrentWorkoutPlan(existingPlan || null)
       } catch (e) {
         console.error('Failed to parse workout plans:', e)
