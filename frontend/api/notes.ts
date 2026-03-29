@@ -6,16 +6,21 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 function getUserId(req: VercelRequest): string | null {
-  const authHeader = req.headers['authorization']
+  // Try both lowercase and uppercase header names
+  const authHeader = req.headers['authorization'] || req.headers['Authorization']
+  console.log('Auth header present:', !!authHeader)
   const token = authHeader && authHeader.split(' ')[1]
+  console.log('Token extracted:', !!token)
 
   if (!token) return null
 
   try {
     const jwt = require('jsonwebtoken')
     const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { userId: string }
+    console.log('Token verified, userId:', decoded.userId)
     return decoded.userId
-  } catch {
+  } catch (error) {
+    console.error('Token verification failed:', error)
     return null
   }
 }
