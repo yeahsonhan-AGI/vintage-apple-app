@@ -16,6 +16,15 @@ function getUserId(req: VercelRequest): string | null {
   }
 }
 
+function getQueryParams(req: VercelRequest) {
+  const url = new URL(req.url || '', 'http://localhost')
+  const params: Record<string, string> = {}
+  url.searchParams.forEach((value, key) => {
+    params[key] = value
+  })
+  return params
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -36,7 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // GET /api/calendar?date=xxx - Get todos
     if (req.method === 'GET') {
-      const { date } = url.searchParams
+      const params = getQueryParams(req)
+      const date = params.date
 
       let query = supabase
         .from('calendar_todos')

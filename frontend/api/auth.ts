@@ -4,7 +4,10 @@ import { supabase, generateToken, corsHeaders } from './_lib/supabase.js'
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return res.status(200).setHeaders(corsHeaders()).end()
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    return res.status(200).end()
   }
 
   const { pathname } = new URL(req.url || '', 'http://localhost')
@@ -12,6 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const action = pathParts[pathParts.length - 1]
 
   res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   try {
     // POST /api/auth/signup

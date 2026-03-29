@@ -16,6 +16,15 @@ function getUserId(req: VercelRequest): string | null {
   }
 }
 
+function getQueryParams(req: VercelRequest) {
+  const url = new URL(req.url || '', 'http://localhost')
+  const params: Record<string, string> = {}
+  url.searchParams.forEach((value, key) => {
+    params[key] = value
+  })
+  return params
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -32,14 +41,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const url = new URL(req.url || '', 'http://localhost')
     const pathParts = url.pathname.split('/').filter(Boolean)
-    // pathParts: ['api', 'fitness', ...rest]
-    // rest[0] could be: 'strength', 'cardio', or an id for DELETE
-
     const rest = pathParts.slice(2) // Remove 'api' and 'fitness'
 
     // GET /api/fitness?period=week - Get stats or plans
     if (req.method === 'GET' && rest.length === 0) {
-      const { period, date } = url.searchParams
+      const params = getQueryParams(req)
+      const period = params.period
+      const date = params.date
 
       // If period is specified, return stats
       if (period) {
@@ -102,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('user_id', userId)
         .order('date_key', { ascending: false })
 
-      if (date && typeof date === 'string') {
+      if (date) {
         query = query.eq('date_key', date)
       }
 
