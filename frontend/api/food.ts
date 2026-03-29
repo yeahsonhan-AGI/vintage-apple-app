@@ -175,7 +175,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(405).json({ error: 'Method not allowed' })
   } catch (error: any) {
-    console.error('Food API error:', error)
+    console.error('=== FOOD API ERROR ===')
+    console.error('Error name:', error?.name)
+    console.error('Error message:', error?.message)
+    console.error('Error stack:', error?.stack)
 
     let errorMessage = 'Failed to process request'
     if (error.message) {
@@ -185,12 +188,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         errorMessage = 'Analysis timeout. Please try again.'
       } else if (error.message.includes('rate limit')) {
         errorMessage = 'Too many requests. Please wait a moment.'
+      } else {
+        errorMessage = error.message
       }
     }
 
     res.status(500).json({
       success: false,
-      error: errorMessage
+      error: errorMessage,
+      type: error?.name
     })
   }
 }

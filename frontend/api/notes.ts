@@ -223,8 +223,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ error: 'Method not allowed' })
-  } catch (error) {
-    console.error('Notes API error:', error)
-    res.status(500).json({ error: 'Request failed' })
+  } catch (error: any) {
+    console.error('=== NOTES API ERROR ===')
+    console.error('Error name:', error?.name)
+    console.error('Error message:', error?.message)
+    console.error('Error stack:', error?.stack)
+    console.error('Full error:', error)
+
+    res.status(500).json({
+      error: 'Request failed',
+      details: error?.message || 'Unknown error',
+      type: error?.name || 'Error'
+    })
   }
 }
