@@ -37,73 +37,88 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   try {
     const url = new URL(req.url || '', 'http://localhost')
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const rest = pathParts.slice(2) // Remove 'api' and 'fitness'
 
-    // GET /api/fitness?period=week - Get stats or plans
-    if (req.method === 'GET' && rest.length === 0) {
+    const apiIndex = pathParts.findIndex(p => p === 'api')
+    if (apiIndex === -1) {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    const resource = pathParts[apiIndex + 1] || '' // 'fitness'
+    const action = pathParts[apiIndex + 2] || '' // 'plans', 'stats', 'strength-exercises', 'cardio-exercises'
+    const id = pathParts[apiIndex + 3] || ''
+
+    if (resource !== 'fitness') {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    // GET /api/fitness/stats?period=week - Get stats
+    if (req.method === 'GET' && action === 'stats') {
       const params = getQueryParams(req)
-      const period = params.period
-      const date = params.date
+      const period = params.period || 'week'
 
-      // If period is specified, return stats
-      if (period) {
-        let startDate = new Date()
-        if (period === 'week') {
-          startDate.setDate(startDate.getDate() - 7)
-        } else if (period === 'month') {
-          startDate.setMonth(startDate.getMonth() - 1)
-        } else {
-          startDate.setDate(startDate.getDate() - 7)
-        }
-
-        const startDateKey = startDate.toISOString().split('T')[0]
-
-        const { data: plans, error: plansError } = await supabase
-          .from('workout_plans')
-          .select('id, training_type, date_key, created_at')
-          .eq('user_id', userId)
-          .gte('date_key', startDateKey)
-          .order('date_key', { ascending: true })
-
-        if (plansError) throw plansError
-
-        const planIds = (plans || []).map(p => p.id)
-        let totalStrengthSets = 0
-        let totalCardioMinutes = 0
-
-        if (planIds.length > 0) {
-          const { data: strengthExercises } = await supabase
-            .from('strength_exercises')
-            .select('sets')
-            .in('workout_plan_id', planIds)
-
-          totalStrengthSets = (strengthExercises || []).reduce((sum, e) => sum + (e.sets || 0), 0)
-
-          const { data: cardioExercises } = await supabase
-            .from('cardio_exercises')
-            .select('duration_minutes')
-            .in('workout_plan_id', planIds)
-
-          totalCardioMinutes = (cardioExercises || []).reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
-        }
-
-        const stats = {
-          period: period || 'week',
-          totalWorkouts: plans?.length || 0,
-          totalStrengthSets,
-          totalCardioMinutes,
-          strengthWorkouts: plans?.filter(p => p.training_type === 'strength').length || 0,
-          cardioWorkouts: plans?.filter(p => p.training_type === 'cardio').length || 0,
-        }
-
-        return res.json({ success: true, data: { stats } })
+      let startDate = new Date()
+      if (period === 'week') {
+        startDate.setDate(startDate.getDate() - 7)
+      } else if (period === 'month') {
+        startDate.setMonth(startDate.getMonth() - 1)
+      } else {
+        startDate.setDate(startDate.getDate() - 7)
       }
 
-      // Otherwise return workout plans for a date
+      const startDateKey = startDate.toISOString().split('T')[0]
+
+      const { data: plans, error: plansError } = await supabase
+        .from('workout_plans')
+        .select('id, training_type, date_key, created_at')
+        .eq('user_id', userId)
+        .gte('date_key', startDateKey)
+        .order('date_key', { ascending: true })
+
+      if (plansError) throw plansError
+
+      const planIds = (plans || []).map(p => p.id)
+      let totalStrengthSets = 0
+      let totalCardioMinutes = 0
+
+      if (planIds.length > 0) {
+        const { data: strengthExercises } = await supabase
+          .from('strength_exercises')
+          .select('sets')
+          .in('workout_plan_id', planIds)
+
+        totalStrengthSets = (strengthExercises || []).reduce((sum, e) => sum + (e.sets || 0), 0)
+
+        const { data: cardioExercises } = await supabase
+          .from('cardio_exercises')
+          .select('duration_minutes')
+          .in('workout_plan_id', planIds)
+
+        totalCardioMinutes = (cardioExercises || []).reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+      }
+
+      const stats = {
+        period,
+        totalWorkouts: plans?.length || 0,
+        totalStrengthSets,
+        totalCardioMinutes,
+        strengthWorkouts: plans?.filter(p => p.training_type === 'strength').length || 0,
+        cardioWorkouts: plans?.filter(p => p.training_type === 'cardio').length || 0,
+      }
+
+      return res.json({ success: true, data: stats })
+    }
+
+    // GET /api/fitness/plans?date=xxx - Get workout plans
+    if (req.method === 'GET' && (action === 'plans' || action === '')) {
+      const params = getQueryParams(req)
+      const date = params.date
+
       let query = supabase
         .from('workout_plans')
         .select('*')
@@ -143,11 +158,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
       )
 
-      return res.json({ success: true, data: { workoutPlans: plansWithExercises } })
+      return res.json({ success: true, data: plansWithExercises })
     }
 
-    // POST /api/fitness - Create workout plan
-    if (req.method === 'POST' && rest.length === 0) {
+    // POST /api/fitness/plans - Create workout plan
+    if (req.method === 'POST' && (action === 'plans' || action === '')) {
       const { date_key, training_type } = req.body
 
       if (!date_key || !training_type) {
@@ -170,11 +185,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error
 
-      return res.status(201).json({ success: true, data: { workoutPlan: data } })
+      return res.status(201).json({ success: true, data })
     }
 
-    // POST /api/fitness/strength - Add strength exercise
-    if (req.method === 'POST' && rest[0] === 'strength') {
+    // POST /api/fitness/strength-exercises - Add strength exercise
+    if (req.method === 'POST' && action === 'strength-exercises') {
       const {
         workout_plan_id,
         body_part,
@@ -213,11 +228,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error
 
-      return res.status(201).json({ success: true, data: { exercise: data } })
+      return res.status(201).json({ success: true, data })
     }
 
-    // POST /api/fitness/cardio - Add cardio exercise
-    if (req.method === 'POST' && rest[0] === 'cardio') {
+    // DELETE /api/fitness/strength-exercises/[id] - Delete strength exercise
+    if (req.method === 'DELETE' && action === 'strength-exercises' && id) {
+      const { error } = await supabase
+        .from('strength_exercises')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      return res.json({ success: true, message: 'Exercise deleted' })
+    }
+
+    // POST /api/fitness/cardio-exercises - Add cardio exercise
+    if (req.method === 'POST' && action === 'cardio-exercises') {
       const {
         workout_plan_id,
         exercise_type,
@@ -248,24 +275,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error
 
-      return res.status(201).json({ success: true, data: { exercise: data } })
+      return res.status(201).json({ success: true, data })
     }
 
-    // DELETE /api/fitness/strength/[id] or /api/fitness/cardio/[id]
-    if (req.method === 'DELETE' && rest.length === 2) {
-      const [type, id] = rest
-      const table = type === 'strength' ? 'strength_exercises' : type === 'cardio' ? 'cardio_exercises' : null
+    // DELETE /api/fitness/cardio-exercises/[id] - Delete cardio exercise
+    if (req.method === 'DELETE' && action === 'cardio-exercises' && id) {
+      const { error } = await supabase
+        .from('cardio_exercises')
+        .delete()
+        .eq('id', id)
 
-      if (table && id) {
-        const { error } = await supabase
-          .from(table)
-          .delete()
-          .eq('id', id)
+      if (error) throw error
 
-        if (error) throw error
-
-        return res.json({ success: true, message: 'Exercise deleted' })
-      }
+      return res.json({ success: true, message: 'Exercise deleted' })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })

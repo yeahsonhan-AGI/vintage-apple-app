@@ -29,7 +29,10 @@ function getQueryParams(req: VercelRequest) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return res.status(200).setHeaders(corsHeaders()).end()
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    return res.status(200).end()
   }
 
   const userId = getUserId(req)
@@ -38,14 +41,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   try {
     const url = new URL(req.url || '', 'http://localhost')
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const rest = pathParts.slice(2) // Remove 'api' and 'food'
+
+    // Remove 'api' and get the rest
+    // /api/food/logs -> ['api', 'food', 'logs']
+    // /api/food/analyze -> ['api', 'food', 'analyze']
+
+    const apiIndex = pathParts.findIndex(p => p === 'api')
+    if (apiIndex === -1) {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    const resource = pathParts[apiIndex + 1] || '' // 'food', 'calendar', etc.
+    const action = pathParts[apiIndex + 2] || '' // 'logs', 'analyze', etc.
+    const id = pathParts[apiIndex + 3] || '' // id for delete/update
+
+    // Food API endpoints
+    if (resource !== 'food') {
+      return res.status(404).json({ error: 'Not found' })
+    }
 
     // POST /api/food/analyze - Analyze food image
-    if (rest[0] === 'analyze' && req.method === 'POST') {
+    if (action === 'analyze' && req.method === 'POST') {
       const { image } = req.body
 
       if (!image) {
@@ -67,11 +89,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    // GET /api/food?date=xxx - Get food logs
-    if (req.method === 'GET' && rest.length === 0) {
+    // GET /api/food/logs?date=xxx - Get food logs (also support /api/food?date=xxx for compatibility)
+    if (req.method === 'GET' && (action === 'logs' || action === '' || action === 'summary')) {
       const params = getQueryParams(req)
       const date = params.date
 
+      // If it's /api/food/summary/[date], extract date from path
+      if (action === 'summary' && id) {
+        const dateKey = id
+        const { data, error } = await supabase
+          .from('daily_food_summary')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('date_key', dateKey)
+          .single()
+
+        if (error && error.code !== 'PGRST116') throw error
+
+        return res.json({ success: true, data })
+      }
+
+      // Get food logs
       let query = supabase
         .from('food_logs')
         .select('*')
@@ -87,23 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ success: true, data })
     }
 
-    // GET /api/food/[date] - Get daily summary
-    if (req.method === 'GET' && rest.length === 1) {
-      const dateKey = rest[0]
-      const { data, error } = await supabase
-        .from('daily_food_summary')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('date_key', dateKey)
-        .single()
-
-      if (error && error.code !== 'PGRST116') throw error
-
-      return res.json({ success: true, data })
-    }
-
-    // POST /api/food - Create food log
-    if (req.method === 'POST' && rest.length === 0) {
+    // POST /api/food/logs - Create food log (also support /api/food for compatibility)
+    if (req.method === 'POST' && (action === 'logs' || action === '')) {
       const { date_key, meal_name, calories, category, image, meal_type } = req.body
 
       const { data, error } = await supabase
@@ -125,13 +148,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json({ success: true, data: insertedLog })
     }
 
-    // DELETE /api/food/[id] - Delete food log
-    if (req.method === 'DELETE' && rest.length === 1) {
-      const id = rest[0]
+    // DELETE /api/food/logs/[id] - Delete food log (also support /api/food/[id] for compatibility)
+    if (req.method === 'DELETE') {
+      const deleteId = action === 'logs' ? id : (action === '' ? id : '')
+
+      if (!deleteId) {
+        return res.status(400).json({ error: 'ID required' })
+      }
+
       const { error } = await supabase
         .from('food_logs')
         .delete()
-        .eq('id', id)
+        .eq('id', deleteId)
         .eq('user_id', userId)
 
       if (error) throw error

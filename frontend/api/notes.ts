@@ -36,7 +36,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const url = new URL(req.url || '', 'http://localhost')
-    const id = url.pathname.split('/').pop()
+    const pathParts = url.pathname.split('/').filter(Boolean)
+
+    const apiIndex = pathParts.findIndex(p => p === 'api')
+    if (apiIndex === -1) {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    const resource = pathParts[apiIndex + 1] || '' // 'notes'
+    const id = pathParts[apiIndex + 2] || ''
+
+    if (resource !== 'notes') {
+      return res.status(404).json({ error: 'Not found' })
+    }
 
     // GET /api/notes - Get all notes
     if (req.method === 'GET' && !id) {
@@ -51,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // POST /api/notes - Create note
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && !id) {
       const { title, content } = req.body
 
       const { data, error } = await supabase

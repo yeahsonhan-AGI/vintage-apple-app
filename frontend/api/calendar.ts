@@ -28,7 +28,10 @@ function getQueryParams(req: VercelRequest) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return res.status(200).setHeaders(corsHeaders()).end()
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    return res.status(200).end()
   }
 
   const userId = getUserId(req)
@@ -37,14 +40,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   try {
     const url = new URL(req.url || '', 'http://localhost')
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const id = pathParts[pathParts.length - 1]
 
-    // GET /api/calendar?date=xxx - Get todos
-    if (req.method === 'GET') {
+    const apiIndex = pathParts.findIndex(p => p === 'api')
+    if (apiIndex === -1) {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    const resource = pathParts[apiIndex + 1] || '' // 'calendar'
+    const action = pathParts[apiIndex + 2] || '' // 'todos'
+    const id = pathParts[apiIndex + 3] || ''
+
+    if (resource !== 'calendar') {
+      return res.status(404).json({ error: 'Not found' })
+    }
+
+    // GET /api/calendar/todos?date=xxx - Get todos
+    if (req.method === 'GET' && (action === 'todos' || action === '')) {
       const params = getQueryParams(req)
       const date = params.date
 
@@ -63,8 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ success: true, data })
     }
 
-    // POST /api/calendar - Create todo
-    if (req.method === 'POST') {
+    // POST /api/calendar/todos - Create todo
+    if (req.method === 'POST' && (action === 'todos' || action === '')) {
       const { date_key, title } = req.body
 
       const { data, error } = await supabase
@@ -82,8 +99,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json({ success: true, data })
     }
 
-    // PUT /api/calendar/[id] - Update todo
-    if (req.method === 'PUT' && id) {
+    // PUT /api/calendar/todos/[id] - Update todo
+    if (req.method === 'PUT' && action === 'todos' && id) {
       const updates = req.body
 
       const { data, error } = await supabase
@@ -98,8 +115,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ success: true, data })
     }
 
-    // DELETE /api/calendar/[id] - Delete todo
-    if (req.method === 'DELETE' && id) {
+    // DELETE /api/calendar/todos/[id] - Delete todo
+    if (req.method === 'DELETE' && action === 'todos' && id) {
       const { error } = await supabase
         .from('calendar_todos')
         .delete()
