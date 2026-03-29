@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -34,7 +35,6 @@ function getUserId(req: VercelRequest): string | null {
   }
 
   try {
-    const jwt = require('jsonwebtoken')
     const jwtSecret = process.env.JWT_SECRET || ''
 
     console.log('Attempting JWT verification...')

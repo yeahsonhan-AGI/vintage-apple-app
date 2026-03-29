@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import { analyzeFoodImage } from './_lib/foodAnalysis.js'
+import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -15,7 +16,6 @@ function getUserId(req: VercelRequest): string | null {
   if (!token) return null
 
   try {
-    const jwt = require('jsonwebtoken')
     const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { userId: string }
     return decoded.userId
   } catch (error) {
