@@ -6,33 +6,51 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 function getUserId(req: VercelRequest): string | null {
+  console.log('=== getUserId START ===')
   console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
+  console.log('JWT_SECRET length:', process.env.JWT_SECRET?.length || 0)
 
-  // Try both lowercase and uppercase header names
   const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined
   console.log('Auth header present:', !!authHeader)
+  console.log('Auth header type:', typeof authHeader)
   console.log('Auth header value:', authHeader ? authHeader.substring(0, 50) + '...' : 'none')
 
-  const token = authHeader && authHeader.split(' ')[1]
+  if (!authHeader) {
+    console.log('No auth header found')
+    return null
+  }
+
+  const parts = authHeader.split(' ')
+  console.log('Auth header parts:', parts.length)
+
+  const token = parts[1]
   console.log('Token extracted:', !!token)
   console.log('Token value:', token ? token.substring(0, 20) + '...' : 'none')
+  console.log('Token length:', token?.length || 0)
 
   if (!token) {
-    console.log('No token found, returning null')
+    console.log('No token found after split')
     return null
   }
 
   try {
     const jwt = require('jsonwebtoken')
     const jwtSecret = process.env.JWT_SECRET || ''
-    console.log('JWT Secret length:', jwtSecret.length)
 
-    const decoded = jwt.verify(token, jwtSecret) as { userId: string }
-    console.log('Token verified, userId:', decoded.userId)
+    console.log('Attempting JWT verification...')
+    console.log('JWT Secret (first 10 chars):', jwtSecret.substring(0, 10))
+
+    const decoded = jwt.verify(token, jwtSecret) as any
+    console.log('JWT verify succeeded')
+    console.log('Decoded token:', JSON.stringify(decoded, null, 2))
+    console.log('User ID from decoded token:', decoded.userId)
+
     return decoded.userId
   } catch (error: any) {
-    console.error('Token verification failed:', error.message)
+    console.error('=== JWT VERIFICATION FAILED ===')
     console.error('Error name:', error.name)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
     return null
   }
 }
