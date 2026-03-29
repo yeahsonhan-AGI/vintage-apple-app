@@ -85,12 +85,25 @@ function App() {
 
   const handleAuthSuccess = (userData: { user: { id: string; email: string }; token: string }) => {
     console.log('Auth success!', userData)
+
+    // Clear any existing auth data first
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+
+    // Then save new data
     localStorage.setItem('token', userData.token)
     localStorage.setItem('user', JSON.stringify(userData.user))
     setIsAuthenticated(true)
     setUser(userData.user)
+
     console.log('Token saved:', localStorage.getItem('token') ? 'YES' : 'NO')
     console.log('User saved:', localStorage.getItem('user'))
+
+    // Verify token was saved correctly
+    const verifyToken = localStorage.getItem('token')
+    if (verifyToken !== userData.token) {
+      console.error('Token mismatch! Expected:', userData.token.substring(0, 20), 'Got:', verifyToken?.substring(0, 20))
+    }
   }
 
   const handleSignOut = () => {
