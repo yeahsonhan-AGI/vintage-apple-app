@@ -52,6 +52,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end()
   }
 
+  // Test mode: return auth check result without fetching data
+  if (req.url && req.url.includes('test')) {
+    const authCheck = {
+      authHeaderPresent: !!(req.headers['authorization'] || req.headers['Authorization']),
+      jwtSecretExists: !!process.env.JWT_SECRET,
+      jwtSecretLength: process.env.JWT_SECRET?.length || 0,
+      userId: null,
+      tokenError: null
+    }
+
+    try {
+      authCheck.userId = getUserId(req)
+      return res.json({ success: true, authCheck })
+    } catch (error: any) {
+      authCheck.tokenError = error.message
+      return res.json({ success: false, authCheck })
+    }
+  }
+
   const userId = getUserId(req)
   console.log('User ID from token:', userId)
 
