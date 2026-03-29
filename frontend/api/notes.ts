@@ -72,20 +72,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Test mode: return auth check result without fetching data
   if (req.url && req.url.includes('test')) {
-    const authCheck = {
-      authHeaderPresent: !!(req.headers['authorization'] || req.headers['Authorization']),
+    const debugInfo = {
+      step: 'Starting auth check',
       jwtSecretExists: !!process.env.JWT_SECRET,
       jwtSecretLength: process.env.JWT_SECRET?.length || 0,
-      userId: null,
-      tokenError: null
+      headersKeys: Object.keys(req.headers),
+      authHeader: null,
+      tokenExtracted: false,
+      tokenLength: 0,
+      jwtVerifyResult: null,
+      error: null
     }
 
     try {
-      authCheck.userId = getUserId(req)
-      return res.json({ success: true, authCheck })
+      // Step 1: Check auth header
+      const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined
+      debugInfo.step = 'Auth header check'
+      debugInfo.authHeader = authHeader ? authHeader.substring(0, 50) + '...' : null
+
+      if (!authHeader) {
+        debugInfo.error = 'No auth header found'
+        return res.json({ success: false, debugInfo })
+      }
+
+      // Step 2: Extract token
+      const parts = authHeader.split(' ')
+      debugInfo.step = 'Token extraction'
+      debugInfo.tokenExtracted = parts.length > 1
+      const token = parts[1]
+      debugInfo.tokenLength = token?.length || 0
+
+      if (!token) {
+        debugInfo.error = 'No token in auth header'
+        return res.json({ success: false, debugInfo })
+      }
+
+      // Step 3: Verify JWT
+      debugInfo.step = 'JWT verification'
+      const jwt = require('jsonwebtoken')
+      const jwtSecret = process.env.JWT_SECRET || ''
+      const decoded = jwt.verify(token, jwtSecret) as any
+
+      debugInfo.jwtVerifyResult = {
+        hasUserId: !!decoded.userId,
+        userId: decoded.userId,
+        hasEmail: !!decoded.email,
+        email: decoded.email
+      }
+
+      debugInfo.step = 'Success - userId: ' + decoded.userId
+      return res.json({ success: true, debugInfo })
+
     } catch (error: any) {
-      authCheck.tokenError = error.message
-      return res.json({ success: false, authCheck })
+      debugInfo.step = 'Error at step: ' + debugInfo.step
+      debugInfo.error = {
+        name: error.name,
+        message: error.message
+      }
+      return res.json({ success: false, debugInfo })
     }
   }
 
