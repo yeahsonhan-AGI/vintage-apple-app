@@ -1452,6 +1452,21 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                   </div>
                 ) : (
                   <div className="fitness-workout-content">
+                    {/* Workout Header with Clear Button */}
+                    <div className="fitness-workout-header">
+                      <h3>Current Workout</h3>
+                      <button
+                        className="fitness-clear-btn"
+                        onClick={() => {
+                          setCurrentWorkoutPlan(null)
+                          setSelectedBodyPart(null)
+                          showToast('Ready to start a new workout')
+                        }}
+                      >
+                        + New Workout
+                      </button>
+                    </div>
+
                     {/* Strength Training View */}
                     {fitnessTrainingType === 'strength' && (
                       <>
