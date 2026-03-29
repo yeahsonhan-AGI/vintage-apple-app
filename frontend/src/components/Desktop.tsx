@@ -39,6 +39,16 @@ interface FoodLog {
 export default function Desktop({ user, onSignOut }: DesktopProps) {
   console.log('Desktop rendered with user:', user)
 
+  // Verify token exists on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    console.log('Desktop mount - token exists:', !!token)
+    if (!token) {
+      console.error('No token found in localStorage!')
+      console.log('All localStorage:', { ...localStorage })
+    }
+  }, [])
+
   const [activeApp, setActiveApp] = useState<string | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)

@@ -11,12 +11,16 @@ function App() {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = () => {
+      console.log('App: checkAuth called')
+      console.log('App: localStorage before check:', { ...localStorage })
+
       // Check URL params for email confirmation token
       const urlParams = new URLSearchParams(window.location.search)
       const confirmToken = urlParams.get('token')
       const error = urlParams.get('error')
 
       if (confirmToken) {
+        console.log('App: Found confirmation token in URL')
         // User just confirmed email, save token and clear URL
         localStorage.setItem('token', confirmToken)
         // Get user info with the token
@@ -36,10 +40,14 @@ function App() {
       const token = localStorage.getItem('token')
       const savedUser = localStorage.getItem('user')
 
+      console.log('App: token from localStorage:', token ? 'exists' : 'none')
+      console.log('App: user from localStorage:', savedUser ? 'exists' : 'none')
+
       if (token && savedUser) {
         try {
           setUser(JSON.parse(savedUser))
           setIsAuthenticated(true)
+          console.log('App: User authenticated from localStorage')
         } catch (e) {
           console.error('Failed to parse saved user:', e)
           localStorage.removeItem('token')

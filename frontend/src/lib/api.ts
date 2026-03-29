@@ -2,14 +2,25 @@ import type { ApiResponse } from '../types'
 
 const API_URL = import.meta.env.DEV ? 'http://localhost:3000/api' : '/api'
 
+// Debug: Check localStorage availability
+try {
+  localStorage.setItem('__test__', 'test')
+  localStorage.removeItem('__test__')
+  console.log('localStorage is available')
+} catch (e) {
+  console.error('localStorage is NOT available:', e)
+}
+
 class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
+      const allStorage = { ...localStorage }
+      console.log('All localStorage items:', allStorage)
       const token = localStorage.getItem('token')
-      console.log(`API Request: ${endpoint}`, token ? 'has token' : 'NO TOKEN')
+      console.log(`API Request: ${endpoint}`, token ? `has token (${token.substring(0, 20)}...)` : 'NO TOKEN')
       console.log(`Full URL: ${API_URL}${endpoint}`)
 
       const response = await fetch(`${API_URL}${endpoint}`, {
