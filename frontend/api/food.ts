@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 function getUserId(req: VercelRequest): string | null {
   // Try both lowercase and uppercase header names
-  const authHeader = req.headers['authorization'] || req.headers['Authorization']
+  const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined
   console.log('Food API - Auth header present:', !!authHeader)
   const token = authHeader && authHeader.split(' ')[1]
 
