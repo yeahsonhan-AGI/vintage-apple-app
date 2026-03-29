@@ -1,5 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { supabase, generateToken, corsHeaders } from './_lib/supabase.js'
+import { createClient } from '@supabase/supabase-js'
+import jwt from 'jsonwebtoken'
+
+const supabaseUrl = process.env.SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+function generateToken(userId: string, email: string): string {
+  return jwt.sign(
+    { userId, email },
+    process.env.JWT_SECRET || '',
+    { expiresIn: '7d' }
+  )
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
@@ -189,8 +202,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ error: 'Method not allowed' })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auth API error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    console.error('Error stack:', error?.stack)
+    console.error('Error message:', error?.message)
+
+    // Check for common issues
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not configured')
+      return res.status(500).json({ error: 'Server configuration error: JWT_SECRET not set' })
+    }
+    if (!process.env.SUPABASE_URL) {
+      console.error('SUPABASE_URL is not configured')
+      return res.status(500).json({ error: 'Server configuration error: SUPABASE_URL not set' })
+    }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+      return res.status(500).json({ error: 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY not set' })
+    }
+
+    res.status(500).json({ error: 'Internal server error', details: error?.message })
   }
 }
