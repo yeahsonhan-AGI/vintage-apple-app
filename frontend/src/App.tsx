@@ -3,60 +3,41 @@ import AuthScreen from './components/AuthScreen'
 import Desktop from './components/Desktop'
 import './App.css'
 
-const API_URL = import.meta.env.VITE_API_URL || '/api'
-
 function App() {
-  // 临时跳过认证，直接进入主界面
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
-  const [user, setUser] = useState<{ id: string; email: string }>({ id: 'demo-user', email: 'demo@example.com' })
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // 初始化时获取 demo token
+  // Check if user is already logged in
   useEffect(() => {
-    const initDemoToken = async () => {
-      // 清除所有旧数据，重新初始化
-      localStorage.clear()
+    const token = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
 
+    if (token && savedUser) {
       try {
-        console.log('Fetching demo token from:', `${API_URL}/auth/demo`)
-        const response = await fetch(`${API_URL}/auth/demo`, {
-          method: 'POST',
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-
-        const data = await response.json()
-        console.log('Demo token response:', data)
-
-        if (data.success && data.data?.token) {
-          localStorage.setItem('token', data.data.token)
-          setUser(data.data.user)
-          console.log('✅ Token saved, user:', data.data.user)
-        } else {
-          throw new Error('Invalid response format')
-        }
-      } catch (error) {
-        console.error('❌ Failed to get demo token:', error)
-        // 即使失败也继续，让用户能看到界面
-      } finally {
-        setLoading(false)
+        setUser(JSON.parse(savedUser))
+        setIsAuthenticated(true)
+      } catch (e) {
+        console.error('Failed to parse saved user:', e)
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
       }
     }
-    initDemoToken()
+    setLoading(false)
   }, [])
 
   const handleAuthSuccess = (userData: { user: { id: string; email: string }; token: string }) => {
     localStorage.setItem('token', userData.token)
+    localStorage.setItem('user', JSON.stringify(userData.user))
     setIsAuthenticated(true)
     setUser(userData.user)
   }
 
   const handleSignOut = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setIsAuthenticated(false)
-    setUser({ id: 'demo-user', email: 'demo@example.com' })
+    setUser(null)
   }
 
   if (loading) {
