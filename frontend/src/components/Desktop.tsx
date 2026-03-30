@@ -864,10 +864,12 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
     console.log('API Response:', response)
     console.log('Response success:', response.success)
     console.log('Response data:', response.data)
+    console.log('Has data:', !!response.data)
+    console.log('Condition check:', response.success, '&&', !!response.data, '=', response.success && !!response.data)
 
     if (response.success && response.data) {
       try {
-        // Backend returns { success: true, data: {workoutPlan: {...}} }
+        // Handle both response formats: { success: true, data: {workoutPlan: {...}} } or { success: true, data: {...} }
         const newPlan = response.data.workoutPlan || response.data
         console.log('New workout plan:', newPlan)
         console.log('Plan ID:', newPlan?.id)

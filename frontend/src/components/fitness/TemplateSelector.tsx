@@ -85,8 +85,9 @@ export default function TemplateSelector({
 
         console.log('createWorkoutPlan response:', response)
 
-        if (response.success && response.data?.workoutPlan) {
-          const workoutPlan = response.data.workoutPlan
+        // Handle both response formats: { success: true, data: {workoutPlan: {...}} } or { success: true, data: {...} }
+        const workoutPlan = response.data?.workoutPlan || response.data
+        if (response.success && workoutPlan) {
           const exercises = template.template_exercises || []
           console.log('Creating', exercises.length, 'exercises...')
 
@@ -103,8 +104,10 @@ export default function TemplateSelector({
                 reps: exercise.reps || 10,
                 weight: exercise.weight,
               })
-              if (exResponse.success && exResponse.data?.exercise) {
-                createdExercises.push(exResponse.data.exercise)
+              // Handle both response formats
+              const createdExercise = exResponse.data?.exercise || exResponse.data
+              if (exResponse.success && createdExercise) {
+                createdExercises.push(createdExercise)
               }
             } else {
               const exResponse = await api.createCardioExercise({
@@ -115,8 +118,10 @@ export default function TemplateSelector({
                 calories_burned: exercise.calories_burned,
                 intensity_level: exercise.intensity_level,
               })
-              if (exResponse.success && exResponse.data?.exercise) {
-                createdExercises.push(exResponse.data.exercise)
+              // Handle both response formats
+              const createdExercise = exResponse.data?.exercise || exResponse.data
+              if (exResponse.success && createdExercise) {
+                createdExercises.push(createdExercise)
               }
             }
           }
@@ -147,8 +152,10 @@ export default function TemplateSelector({
       try {
         const response = await api.createWorkoutFromTemplate(template.id, dateKey)
 
-        if (response.success && response.data?.workout_plan) {
-          onSelectTemplate(response.data.workout_plan)
+        // Handle both response formats
+        const workoutPlan = response.data?.workout_plan || response.data
+        if (response.success && workoutPlan) {
+          onSelectTemplate(workoutPlan)
           onClose()
         }
       } catch (error) {
