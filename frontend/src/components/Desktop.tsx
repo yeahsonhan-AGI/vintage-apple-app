@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../lib/api'
-import type { FoodAnalysisResult } from '../types'
+import type { FoodAnalysisResult, WorkoutPlan } from '../types'
 import { ChestIcon, BackIcon, LegsIcon, ShouldersIcon, ArmsIcon, CoreIcon, EmptyStrengthIcon, EmptyCardioIcon, StrengthTypeIcon, CardioTypeIcon } from './FitnessIcons'
 import { MoreIcon, NotesIcon, YouTubeIcon, CalendarIcon, IconsIcon, FitnessIcon } from './DockIcons'
 import { FoodIcon, EmptyFoodIcon, FireIcon, CameraAddIcon } from './DockIcons'
 import FoodEditModal from './FoodEditModal'
+import FitnessDashboard from './fitness/FitnessDashboard'
+import TemplateSelector from './fitness/TemplateSelector'
+import CalendarView from './fitness/CalendarView'
+import ProgressView from './fitness/ProgressView'
+import { formatDateKey } from '../lib/fitnessUtils'
 
 interface DesktopProps {
   user: { id: string; email: string } | null
@@ -97,8 +102,8 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
   const [fitnessStats, setFitnessStats] = useState<any>(null)
   const [fitnessTrainingType, setFitnessTrainingType] = useState<'strength' | 'cardio'>('strength')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string | null>(null)
-  const [currentWorkoutPlan, setCurrentWorkoutPlan] = useState<any>(null)
-  const [fitnessView, setFitnessView] = useState<'plan' | 'train' | 'summary'>('plan')
+  const [currentWorkoutPlan, setCurrentWorkoutPlan] = useState<WorkoutPlan | null>(null)
+  const [fitnessView, setFitnessView] = useState<'dashboard' | 'workout' | 'summary' | 'templates' | 'calendar' | 'progress'>('dashboard')
 
   // Exercise form state
   const [strengthExercise, setStrengthExercise] = useState({
@@ -732,14 +737,50 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
   }
 
   // Fitness functions
-  const completeWorkout = () => {
+  const completeWorkout = async () => {
+    if (currentWorkoutPlan) {
+      // Mark workout as completed
+      await api.completeWorkout(currentWorkoutPlan.id)
+    }
     setFitnessView('summary')
     showToast('🎉 Training completed! Great job!')
   }
 
   const backToTraining = () => {
-    setFitnessView('plan')
-    loadWorkoutPlans()
+    setFitnessView('dashboard')
+    setCurrentWorkoutPlan(null)
+    setSelectedBodyPart(null)
+  }
+
+  const handleTemplateSelect = (workout: WorkoutPlan) => {
+    setCurrentWorkoutPlan(workout)
+    setFitnessView('workout')
+    showToast(`Workout loaded from template!`)
+  }
+
+  const handleCreateBlank = async () => {
+    console.log('=== handleCreateBlank called ===')
+    console.log('Current fitnessView:', fitnessView)
+    console.log('Current workout plan:', currentWorkoutPlan)
+    await createFitnessWorkout()
+  }
+
+  const handleCalendarSelect = async (dateKey: string) => {
+    const newDate = new Date(dateKey)
+    setFitnessDate(newDate)
+
+    // Load workouts for the selected date
+    const response = await api.getWorkoutPlans(dateKey)
+    if (response.success && response.data) {
+      const plans = Array.isArray(response.data) ? response.data : []
+      const existingPlan = plans.find((p: any) => p?.training_type === fitnessTrainingType && p?.date_key === dateKey)
+      if (existingPlan) {
+        setCurrentWorkoutPlan(existingPlan)
+        setFitnessView('workout')
+      } else {
+        setFitnessView('dashboard')
+      }
+    }
   }
 
   const loadWorkoutPlans = async () => {
@@ -771,21 +812,29 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
         }
 
         console.log('Selected plan for', fitnessTrainingType, ':', existingPlan)
-        setCurrentWorkoutPlan(existingPlan || null)
+        // Only update currentWorkoutPlan if:
+        // 1. We found a plan, OR
+        // 2. Current workout plan doesn't match the current date/training type
+        // This prevents overriding a newly created plan that hasn't been synced to database yet
+        if (existingPlan) {
+          setCurrentWorkoutPlan(existingPlan)
+        } else if (!currentWorkoutPlan || currentWorkoutPlan.date_key !== dateKey || currentWorkoutPlan.training_type !== fitnessTrainingType) {
+          setCurrentWorkoutPlan(null)
+        }
       } catch (e) {
         console.error('Failed to parse workout plans:', e)
         setWorkoutPlans([])
-        setCurrentWorkoutPlan(null)
+        // Don't clear currentWorkoutPlan if there's an error - it might be a valid new plan
       }
     } else {
       console.log('loadWorkoutPlans - no success or data')
       setWorkoutPlans([])
-      setCurrentWorkoutPlan(null)
+      // Don't clear currentWorkoutPlan if there's an error
     }
   }
 
-  const loadFitnessStats = async () => {
-    const response = await api.getFitnessStats('week')
+  const loadFitnessStats = async (period: 'week' | 'month' = 'week') => {
+    const response = await api.getFitnessStats(period)
     console.log('loadFitnessStats - response:', response)
     if (response.success && response.data) {
       try {
@@ -818,12 +867,18 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
     if (response.success && response.data) {
       try {
-        // Backend returns { success: true, data: {...} } - data is directly the plan object
-        const newPlan = response.data
+        // Backend returns { success: true, data: {workoutPlan: {...}} }
+        const newPlan = response.data.workoutPlan || response.data
         console.log('New workout plan:', newPlan)
+        console.log('Plan ID:', newPlan?.id)
+        console.log('Plan structure:', JSON.stringify(newPlan, null, 2))
         setCurrentWorkoutPlan(newPlan || null)
-        loadWorkoutPlans()
+        // Don't call loadWorkoutPlans() here to avoid overriding the new plan
+        // loadWorkoutPlans() will be called by useEffect when needed
         showToast(`${fitnessTrainingType === 'strength' ? 'Strength' : 'Cardio'} workout created!`)
+        // Switch to workout view after plan is set
+        console.log('Setting fitnessView to workout')
+        setFitnessView('workout')
       } catch (e) {
         console.error('Failed to parse workout plan:', e)
       }
@@ -855,7 +910,20 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
     })
 
     if (response.success) {
-      loadWorkoutPlans()
+      // Manually update currentWorkoutPlan instead of relying on loadWorkoutPlans
+      const newExercise = response.data?.exercise || response.data
+      if (newExercise && currentWorkoutPlan) {
+        setCurrentWorkoutPlan({
+          ...currentWorkoutPlan,
+          exercises: {
+            ...currentWorkoutPlan.exercises,
+            strength: [
+              ...(currentWorkoutPlan.exercises?.strength || []),
+              newExercise
+            ]
+          }
+        })
+      }
       setStrengthExercise({
         exercise_name: '',
         equipment: '',
@@ -890,7 +958,20 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
     })
 
     if (response.success) {
-      loadWorkoutPlans()
+      // Manually update currentWorkoutPlan instead of relying on loadWorkoutPlans
+      const newExercise = response.data?.exercise || response.data
+      if (newExercise && currentWorkoutPlan) {
+        setCurrentWorkoutPlan({
+          ...currentWorkoutPlan,
+          exercises: {
+            ...currentWorkoutPlan.exercises,
+            cardio: [
+              ...(currentWorkoutPlan.exercises?.cardio || []),
+              newExercise
+            ]
+          }
+        })
+      }
       setCardioExercise({
         exercise_type: 'running',
         duration_minutes: 30,
@@ -905,16 +986,30 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
 
   const deleteStrengthExercise = async (exerciseId: string) => {
     const response = await api.deleteStrengthExercise(exerciseId)
-    if (response.success) {
-      loadWorkoutPlans()
+    if (response.success && currentWorkoutPlan) {
+      // Manually update currentWorkoutPlan instead of relying on loadWorkoutPlans
+      setCurrentWorkoutPlan({
+        ...currentWorkoutPlan,
+        exercises: {
+          ...currentWorkoutPlan.exercises,
+          strength: currentWorkoutPlan.exercises?.strength?.filter((ex: any) => ex.id !== exerciseId) || []
+        }
+      })
       showToast('Exercise deleted')
     }
   }
 
   const deleteCardioExercise = async (exerciseId: string) => {
     const response = await api.deleteCardioExercise(exerciseId)
-    if (response.success) {
-      loadWorkoutPlans()
+    if (response.success && currentWorkoutPlan) {
+      // Manually update currentWorkoutPlan instead of relying on loadWorkoutPlans
+      setCurrentWorkoutPlan({
+        ...currentWorkoutPlan,
+        exercises: {
+          ...currentWorkoutPlan.exercises,
+          cardio: currentWorkoutPlan.exercises?.cardio?.filter((ex: any) => ex.id !== exerciseId) || []
+        }
+      })
       showToast('Exercise deleted')
     }
   }
@@ -1411,83 +1506,82 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
             {/* Fitness App - Training Tracker */}
             {activeApp === 'fitness' && (
               <div className="fitness-app">
-                <div className="fitness-header">
-                  <button className="fitness-date-nav" onClick={() => handleFitnessDateChange('prev')}>
-                    ‹
-                  </button>
-                  <div className="fitness-date">
-                    {fitnessDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </div>
-                  <button className="fitness-date-nav" onClick={() => handleFitnessDateChange('next')}>
-                    ›
-                  </button>
-                </div>
-
-                {/* Stats Summary */}
-                {fitnessStats && (
-                  <div className="fitness-stats">
-                    <div className="fitness-stat-item">
-                      <div className="fitness-stat-value">{fitnessStats.totalWorkouts}</div>
-                      <div className="fitness-stat-label">Workouts</div>
-                    </div>
-                    <div className="fitness-stat-item">
-                      <div className="fitness-stat-value">{fitnessStats.totalStrengthSets}</div>
-                      <div className="fitness-stat-label">Sets</div>
-                    </div>
-                    <div className="fitness-stat-item">
-                      <div className="fitness-stat-value">{fitnessStats.totalCardioMinutes}</div>
-                      <div className="fitness-stat-label">Min</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Training Type Tabs */}
-                <div className="fitness-tabs">
-                  <button
-                    className={`fitness-tab ${fitnessTrainingType === 'strength' ? 'active' : ''}`}
-                    onClick={() => { setFitnessTrainingType('strength'); }}
-                  >
-                    <StrengthTypeIcon size={28} className="fitness-tab-icon" />
-                    <span>Strength</span>
-                  </button>
-                  <button
-                    className={`fitness-tab ${fitnessTrainingType === 'cardio' ? 'active' : ''}`}
-                    onClick={() => { setFitnessTrainingType('cardio'); }}
-                  >
-                    <CardioTypeIcon size={28} className="fitness-tab-icon" />
-                    <span>Cardio</span>
-                  </button>
-                </div>
-
-                {/* Workout Content */}
-                {!currentWorkoutPlan ? (
-                  <div className="fitness-empty-workout">
-                    <div className="fitness-empty-icon">
-                      {fitnessTrainingType === 'strength' ? <EmptyStrengthIcon size={72} /> : <EmptyCardioIcon size={72} />}
-                    </div>
-                    <div className="fitness-empty-text">
-                      No {fitnessTrainingType} workout today
-                    </div>
-                    <button className="fitness-create-btn" onClick={createFitnessWorkout}>
-                      Start {fitnessTrainingType === 'strength' ? 'Strength' : 'Cardio'} Workout
-                    </button>
-                  </div>
-                ) : (
-                  <div className="fitness-workout-content">
-                    {/* Workout Header with Clear Button */}
-                    <div className="fitness-workout-header">
-                      <h3>Current Workout</h3>
-                      <button
-                        className="fitness-clear-btn"
-                        onClick={() => {
-                          setCurrentWorkoutPlan(null)
-                          setSelectedBodyPart(null)
-                          showToast('Ready to start a new workout')
-                        }}
-                      >
-                        + New Workout
+                {fitnessView === 'dashboard' && (
+                  <>
+                    <div className="fitness-header">
+                      <button className="fitness-date-nav" onClick={() => handleFitnessDateChange('prev')}>
+                        ‹
+                      </button>
+                      <div className="fitness-date">
+                        {fitnessDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                      <button className="fitness-date-nav" onClick={() => handleFitnessDateChange('next')}>
+                        ›
                       </button>
                     </div>
+
+                    {/* Training Type Tabs */}
+                    <div className="fitness-tabs">
+                      <button
+                        className={`fitness-tab ${fitnessTrainingType === 'strength' ? 'active' : ''}`}
+                        onClick={() => { setFitnessTrainingType('strength'); }}
+                      >
+                        <StrengthTypeIcon size={28} className="fitness-tab-icon" />
+                        <span>Strength</span>
+                      </button>
+                      <button
+                        className={`fitness-tab ${fitnessTrainingType === 'cardio' ? 'active' : ''}`}
+                        onClick={() => { setFitnessTrainingType('cardio'); }}
+                      >
+                        <CardioTypeIcon size={28} className="fitness-tab-icon" />
+                        <span>Cardio</span>
+                      </button>
+                    </div>
+
+                    <FitnessDashboard
+                      trainingType={fitnessTrainingType}
+                      onTemplateSelect={handleTemplateSelect}
+                      onCreateBlank={handleCreateBlank}
+                      onCalendarSelect={handleCalendarSelect}
+                      stats={fitnessStats}
+                      fitnessDate={fitnessDate}
+                      onStatsRefresh={loadFitnessStats}
+                    />
+                  </>
+                )}
+
+                {(fitnessView === 'workout' || fitnessView === 'templates') && currentWorkoutPlan && (
+                  <>
+                    <div className="fitness-header">
+                      <button className="fitness-date-nav" onClick={() => {
+                        setCurrentWorkoutPlan(null)
+                        setFitnessView('dashboard')
+                        setSelectedBodyPart(null)
+                      }}>
+                        ‹ Back
+                      </button>
+                      <div className="fitness-date">
+                        {fitnessDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                      <div></div>
+                    </div>
+
+                    <div className="fitness-workout-content">
+                      {/* Workout Header with Clear Button */}
+                      <div className="fitness-workout-header">
+                        <h3>Current Workout</h3>
+                        <button
+                          className="fitness-clear-btn"
+                          onClick={() => {
+                            setCurrentWorkoutPlan(null)
+                            setSelectedBodyPart(null)
+                            setFitnessView('dashboard')
+                            showToast('Ready to start a new workout')
+                          }}
+                        >
+                          + New Workout
+                        </button>
+                      </div>
 
                     {/* Strength Training View */}
                     {fitnessTrainingType === 'strength' && (
@@ -1739,6 +1833,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
                       </>
                     )}
                   </div>
+                </>
                 )}
 
                 {/* Training Summary Page */}

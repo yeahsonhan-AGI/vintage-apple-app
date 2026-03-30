@@ -8,6 +8,7 @@ import notesRoutes from './routes/notes'
 import calendarRoutes from './routes/calendar'
 import foodRoutes from './routes/food'
 import fitnessRoutes from './routes/fitness'
+import fitnessEnhancedRoutes from './routes/fitness.enhanced'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -36,6 +37,7 @@ app.use('/api/notes', notesRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/food', foodRoutes)
 app.use('/api/fitness', fitnessRoutes)
+app.use('/api/fitness', fitnessEnhancedRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

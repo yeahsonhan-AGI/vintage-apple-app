@@ -1,6 +1,12 @@
 import type { ApiResponse } from '../types'
 
-const API_URL = import.meta.env.DEV ? 'http://localhost:3000/api' : '/api'
+// Use relative '/api' path in all environments
+// Vite dev server will proxy '/api' to Express backend on port 3000
+// In production, '/api' will be handled by serverless functions or backend
+const API_URL = '/api'
+
+// Log API configuration for debugging
+console.log('API Configuration:', { API_URL, DEV: import.meta.env.DEV, MODE: import.meta.env.MODE })
 
 // Debug: Check localStorage availability
 try {
@@ -223,6 +229,112 @@ class ApiClient {
   // Fitness - Statistics
   async getFitnessStats(period: 'week' | 'month' = 'week') {
     return this.request(`/fitness/stats?period=${period}`)
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - TEMPLATES
+  // ============================================
+
+  async getTemplates(trainingType?: 'strength' | 'cardio') {
+    const url = trainingType ? `/fitness/templates?training_type=${trainingType}` : '/fitness/templates'
+    return this.request(url)
+  }
+
+  async getTemplate(id: string) {
+    return this.request(`/fitness/templates/${id}`)
+  }
+
+  async createTemplate(template: {
+    name: string
+    description?: string
+    training_type: 'strength' | 'cardio'
+    exercises: any[]
+  }) {
+    return this.request('/fitness/templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    })
+  }
+
+  async updateTemplate(id: string, template: {
+    name?: string
+    description?: string
+    exercises?: any[]
+  }) {
+    return this.request(`/fitness/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(template),
+    })
+  }
+
+  async deleteTemplate(id: string) {
+    return this.request(`/fitness/templates/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - PERSONAL RECORDS
+  // ============================================
+
+  async getPersonalRecords(trainingType?: 'strength' | 'cardio', bodyPart?: string) {
+    let url = '/fitness/pr'
+    const params = new URLSearchParams()
+    if (trainingType) params.append('training_type', trainingType)
+    if (bodyPart) params.append('body_part', bodyPart)
+    if (params.toString()) url += `?${params.toString()}`
+    return this.request(url)
+  }
+
+  async getExercisePR(exerciseName: string) {
+    return this.request(`/fitness/pr/${encodeURIComponent(exerciseName)}`)
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - CALENDAR
+  // ============================================
+
+  async getFitnessCalendar(month: number, year: number) {
+    return this.request(`/fitness/calendar?month=${month}&year=${year}`)
+  }
+
+  async getWorkoutByDate(dateKey: string) {
+    return this.request(`/fitness/workout/${dateKey}`)
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - EXERCISE HISTORY
+  // ============================================
+
+  async getExerciseHistory(exerciseName: string, trainingType: 'strength' | 'cardio') {
+    return this.request(`/fitness/exercise-history/${encodeURIComponent(exerciseName)}?training_type=${trainingType}`)
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - TRENDS
+  // ============================================
+
+  async getFitnessTrends(period: 'week' | 'month' | 'quarter' = 'month', exerciseName?: string) {
+    let url = `/fitness/trends?period=${period}`
+    if (exerciseName) url += `&exercise_name=${encodeURIComponent(exerciseName)}`
+    return this.request(url)
+  }
+
+  // ============================================
+  // FITNESS ENHANCED - WORKOUT FROM TEMPLATE
+  // ============================================
+
+  async createWorkoutFromTemplate(templateId: string, dateKey: string) {
+    return this.request('/fitness/workout-from-template', {
+      method: 'POST',
+      body: JSON.stringify({ template_id: templateId, date_key: dateKey }),
+    })
+  }
+
+  async completeWorkout(workoutPlanId: string) {
+    return this.request(`/fitness/workout/${workoutPlanId}/complete`, {
+      method: 'POST',
+    })
   }
 }
 

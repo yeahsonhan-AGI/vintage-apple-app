@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import AuthScreen from './components/AuthScreen'
 import Desktop from './components/Desktop'
 import './App.css'
+import './components/fitness/FitnessEnhancements.css'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

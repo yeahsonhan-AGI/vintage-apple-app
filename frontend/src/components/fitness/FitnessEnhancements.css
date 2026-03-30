@@ -1,0 +1,873 @@
+/* ============================================
+   FITNESS UX ENHANCEMENT STYLES
+   ============================================ */
+
+/* Fitness Dashboard */
+.fitness-dashboard {
+  padding: var(--space-lg);
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.fitness-dashboard-welcome {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.fitness-dashboard-welcome h2 {
+  font-family: 'Caveat', cursive;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.fitness-dashboard-subtitle {
+  font-size: 18px;
+  color: var(--text-medium);
+}
+
+.fitness-weekly-stats {
+  margin-bottom: var(--space-xl);
+}
+
+.fitness-weekly-stats h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.fitness-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.fitness-stat-card {
+  background: var(--bg-warm);
+  border: 2px solid;
+  border-color: var(--q-blue);
+  border-radius: 16px;
+  padding: var(--space-md);
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.fitness-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.fitness-stat-card:active {
+  transform: scale(0.95);
+}
+
+.fitness-stat-card.selected {
+  background: linear-gradient(135deg, var(--q-pink), var(--q-lavender));
+  border-color: var(--q-pink);
+  transform: scale(1.05);
+}
+
+.fitness-stat-icon {
+  font-size: 24px;
+  margin-bottom: var(--space-xs);
+}
+
+.fitness-stat-value {
+  font-family: 'Caveat', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.fitness-stat-label {
+  font-size: 14px;
+  color: var(--text-medium);
+  margin-top: var(--space-xs);
+}
+
+.fitness-suggestion-card {
+  background: linear-gradient(135deg, var(--q-pink), var(--q-lavender));
+  border-radius: 16px;
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.fitness-suggestion-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+}
+
+.fitness-suggestion-content h4 {
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.fitness-suggestion-content p {
+  font-size: 16px;
+  color: var(--text-dark);
+  opacity: 0.9;
+}
+
+.fitness-quick-actions h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.fitness-action-card {
+  background: var(--bg-warm);
+  border: 2px solid;
+  border-radius: 16px;
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fitness-action-card.primary {
+  border-color: var(--q-pink);
+  background: linear-gradient(135deg, #FFF5F8, #FEF5FF);
+}
+
+.fitness-action-card.secondary {
+  border-color: var(--q-mint);
+}
+
+.fitness-action-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fitness-action-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.fitness-action-content {
+  flex: 1;
+  text-align: left;
+}
+
+.fitness-action-title {
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.fitness-action-desc {
+  font-size: 14px;
+  color: var(--text-medium);
+}
+
+.fitness-action-arrow {
+  font-size: 20px;
+  color: var(--text-light);
+}
+
+.fitness-recent-hint {
+  background: var(--bg-warm);
+  border-radius: 12px;
+  padding: var(--space-md);
+  margin-top: var(--space-lg);
+  font-size: 14px;
+  color: var(--text-medium);
+  text-align: center;
+}
+
+.fitness-recent-hint strong {
+  color: var(--text-dark);
+}
+
+/* Template Selector */
+.fitness-template-selector {
+  padding: var(--space-lg);
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.fitness-template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-template-header h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.fitness-close-btn {
+  background: var(--q-coral);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.fitness-close-btn:hover {
+  transform: rotate(90deg);
+}
+
+.fitness-template-loading {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-medium);
+}
+
+.fitness-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.fitness-template-card {
+  background: var(--bg-warm);
+  border: 3px solid;
+  border-radius: 16px;
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-color: var(--q-mint);
+}
+
+.fitness-template-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fitness-template-card.selected {
+  border-color: var(--q-pink);
+  background: linear-gradient(135deg, #FFF5F8, #FEF5FF);
+}
+
+.fitness-template-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fitness-template-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.fitness-template-info {
+  flex: 1;
+  text-align: left;
+}
+
+.fitness-template-name {
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: var(--space-xs);
+}
+
+.fitness-template-desc {
+  font-size: 14px;
+  color: var(--text-medium);
+  margin-bottom: var(--space-xs);
+}
+
+.fitness-template-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.fitness-template-badge {
+  background: var(--q-lavender);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.fitness-template-arrow {
+  font-size: 24px;
+  color: var(--text-light);
+}
+
+.fitness-template-empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-medium);
+}
+
+/* Calendar View */
+.fitness-calendar-view {
+  padding: var(--space-lg);
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.fitness-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-calendar-header h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.fitness-calendar-nav {
+  background: var(--q-mint);
+  border: none;
+  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.fitness-calendar-nav:hover {
+  transform: scale(1.1);
+}
+
+.fitness-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-calendar-day-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-medium);
+  padding: var(--space-sm);
+}
+
+.fitness-calendar-day {
+  aspect-ratio: 1;
+  background: var(--bg-warm);
+  border: 2px solid var(--q-mint);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.fitness-calendar-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.fitness-calendar-day:hover:not(.empty) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fitness-calendar-day.has-workout {
+  border-color: var(--q-blue);
+}
+
+.fitness-calendar-day.has-workout.strength {
+  border-color: var(--q-pink);
+}
+
+.fitness-calendar-day.has-workout.cardio {
+  border-color: var(--q-coral);
+}
+
+.fitness-calendar-day.completed {
+  background: linear-gradient(135deg, var(--q-mint), var(--q-blue));
+}
+
+.fitness-calendar-day.selected {
+  border-color: var(--q-lavender);
+  box-shadow: 0 0 0 3px var(--q-lavender);
+}
+
+.fitness-calendar-day.is-today {
+  border-width: 3px;
+}
+
+.fitness-calendar-day-number {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.fitness-calendar-indicators {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.fitness-calendar-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.fitness-calendar-indicator.strength {
+  background: var(--q-pink);
+}
+
+.fitness-calendar-indicator.cardio {
+  background: var(--q-coral);
+}
+
+.fitness-calendar-indicator.completed {
+  background: var(--q-mint);
+}
+
+.fitness-calendar-detail {
+  background: var(--bg-warm);
+  border-radius: 16px;
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-calendar-detail h4 {
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.fitness-calendar-workout-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.fitness-calendar-workout-type {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.completed-badge {
+  background: var(--q-mint);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.fitness-calendar-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fitness-calendar-exercise {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm);
+  background: white;
+  border-radius: 8px;
+}
+
+.fitness-calendar-exercise .exercise-name {
+  font-weight: 600;
+}
+
+.fitness-calendar-exercise .exercise-stats {
+  color: var(--text-medium);
+}
+
+.fitness-calendar-view-btn,
+.fitness-calendar-create-btn {
+  background: var(--q-blue);
+  border: none;
+  border-radius: 12px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.fitness-calendar-no-workout {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--text-medium);
+}
+
+.fitness-calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 12px;
+  color: var(--text-medium);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.strength {
+  background: var(--q-pink);
+}
+
+.legend-dot.cardio {
+  background: var(--q-coral);
+}
+
+.legend-dot.completed {
+  background: var(--q-mint);
+}
+
+/* Progress View */
+.fitness-progress-view {
+  padding: var(--space-lg);
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.fitness-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-progress-header h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.fitness-period-selector {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-period-btn {
+  flex: 1;
+  background: var(--bg-warm);
+  border: 2px solid var(--q-mint);
+  border-radius: 12px;
+  padding: var(--space-sm);
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fitness-period-btn.active {
+  background: var(--q-blue);
+  border-color: var(--q-blue);
+  color: white;
+}
+
+.fitness-progress-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.fitness-progress-tab {
+  flex: 1;
+  background: var(--bg-warm);
+  border: 2px solid var(--q-lavender);
+  border-radius: 12px;
+  padding: var(--space-sm);
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fitness-progress-tab.active {
+  background: var(--q-lavender);
+  border-color: var(--q-lavender);
+}
+
+.fitness-progress-content {
+  min-height: 300px;
+}
+
+.fitness-progress-loading {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-medium);
+}
+
+.fitness-progress-empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-medium);
+}
+
+.fitness-progress-empty small {
+  display: block;
+  margin-top: var(--space-sm);
+  font-size: 14px;
+}
+
+.fitness-strength-trends,
+.fitness-cardio-trends {
+  margin-bottom: var(--space-xl);
+}
+
+.fitness-strength-trends h4,
+.fitness-cardio-trends h4 {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.fitness-trend-chart {
+  background: var(--bg-warm);
+  border-radius: 16px;
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.fitness-chart-container {
+  position: relative;
+  height: 150px;
+  margin: var(--space-md) 0;
+}
+
+.fitness-chart-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.fitness-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.fitness-chart-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: var(--space-sm);
+}
+
+.fitness-pr-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.fitness-pr-card {
+  background: var(--bg-warm);
+  border: 2px solid;
+  border-color: var(--q-yellow);
+  border-radius: 16px;
+  padding: var(--space-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.fitness-pr-card::before {
+  content: '🏆';
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  font-size: 24px;
+  opacity: 0.3;
+}
+
+.fitness-pr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.fitness-pr-name {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.fitness-pr-type {
+  font-size: 12px;
+  background: var(--q-lavender);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.fitness-pr-value {
+  font-family: 'Caveat', cursive;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.fitness-pr-date {
+  font-size: 12px;
+  color: var(--text-medium);
+}
+
+.fitness-pr-bodypart {
+  display: inline-block;
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  background: var(--q-mint);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.fitness-frequency-heatmap {
+  background: var(--bg-warm);
+  border-radius: 16px;
+  padding: var(--space-md);
+}
+
+.fitness-frequency-heatmap h4 {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.fitness-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.fitness-heatmap-day-label {
+  font-size: 10px;
+  color: var(--text-light);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.fitness-heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  transition: transform 0.2s;
+}
+
+.fitness-heatmap-cell:hover {
+  transform: scale(1.2);
+}
+
+.fitness-heatmap-cell.intensity-0 {
+  background: #f0f0f0;
+}
+
+.fitness-heatmap-cell.intensity-1 {
+  background: #C5E8C0;
+}
+
+.fitness-heatmap-cell.intensity-2 {
+  background: #A8D8EA;
+}
+
+.fitness-heatmap-cell.intensity-3 {
+  background: #FFB5C5;
+}
+
+.fitness-heatmap-cell.intensity-4 {
+  background: #FF9E9E;
+}
+
+.fitness-heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  font-size: 12px;
+  color: var(--text-medium);
+}
+
+.fitness-heatmap-legend-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+/* PR Badge on exercises */
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Exercise history hint */
+.exercise-history-hint {
+  background: var(--q-lavender);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-dark);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.exercise-history-hint::before {
+  content: '📊';
+}
