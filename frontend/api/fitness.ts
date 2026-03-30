@@ -625,6 +625,304 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ success: true, data: updatedWorkout })
     }
 
+    // GET /api/fitness/templates?training_type=strength|cardio - Get workout templates
+    if (req.method === 'GET' && action === 'templates' && !id) {
+      const params = getQueryParams(req)
+      const trainingType = params.training_type as 'strength' | 'cardio' | undefined
+
+      let query = supabase
+        .from('workout_templates')
+        .select('*')
+        .eq('user_id', userId)
+
+      if (trainingType) {
+        query = query.eq('training_type', trainingType)
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false })
+
+      if (error) {
+        // If table doesn't exist yet, return empty array
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          return res.json({ success: true, data: [] })
+        }
+        throw error
+      }
+
+      return res.json({ success: true, data: data || [] })
+    }
+
+    // GET /api/fitness/templates/[id] - Get specific template
+    if (req.method === 'GET' && action === 'templates' && id) {
+      const { data, error } = await supabase
+        .from('workout_templates')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Template not found' })
+        }
+        throw error
+      }
+
+      return res.json({ success: true, data })
+    }
+
+    // POST /api/fitness/templates - Create workout template
+    if (req.method === 'POST' && action === 'templates') {
+      const { name, description, training_type, exercises } = req.body
+
+      if (!name || !training_type || !exercises || !Array.isArray(exercises)) {
+        return res.status(400).json({ error: 'name, training_type, and exercises are required' })
+      }
+
+      const { data, error } = await supabase
+        .from('workout_templates')
+        .insert({
+          user_id: userId,
+          name,
+          description: description || null,
+          training_type,
+          exercises,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      return res.status(201).json({ success: true, data })
+    }
+
+    // PUT /api/fitness/templates/[id] - Update workout template
+    if (req.method === 'PUT' && action === 'templates' && id) {
+      const { name, description, exercises } = req.body
+
+      // First verify ownership
+      const { data: existing } = await supabase
+        .from('workout_templates')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+
+      if (!existing || existing.user_id !== userId) {
+        return res.status(404).json({ error: 'Template not found' })
+      }
+
+      const updates: any = {}
+      if (name !== undefined) updates.name = name
+      if (description !== undefined) updates.description = description
+      if (exercises !== undefined) updates.exercises = exercises
+
+      const { data, error } = await supabase
+        .from('workout_templates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      return res.json({ success: true, data })
+    }
+
+    // DELETE /api/fitness/templates/[id] - Delete workout template
+    if (req.method === 'DELETE' && action === 'templates' && id) {
+      // First verify ownership
+      const { data: existing } = await supabase
+        .from('workout_templates')
+        .select('user_id')
+        .eq('id', id)
+        .single()
+
+      if (!existing || existing.user_id !== userId) {
+        return res.status(404).json({ error: 'Template not found' })
+      }
+
+      const { error } = await supabase
+        .from('workout_templates')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      return res.json({ success: true, message: 'Template deleted' })
+    }
+
+    // POST /api/fitness/workout-from-template - Create workout from template
+    if (req.method === 'POST' && action === 'workout-from-template') {
+      const { template_id, date_key } = req.body
+
+      if (!template_id || !date_key) {
+        return res.status(400).json({ error: 'template_id and date_key are required' })
+      }
+
+      // Get the template
+      const { data: template, error: templateError } = await supabase
+        .from('workout_templates')
+        .select('*')
+        .eq('id', template_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (templateError || !template) {
+        return res.status(404).json({ error: 'Template not found' })
+      }
+
+      // Create workout plan
+      const { data: workoutPlan, error: planError } = await supabase
+        .from('workout_plans')
+        .insert({
+          user_id: userId,
+          date_key,
+          training_type: template.training_type,
+        })
+        .select()
+        .single()
+
+      if (planError) throw planError
+
+      // Create exercises from template
+      if (template.exercises && Array.isArray(template.exercises)) {
+        for (const exercise of template.exercises) {
+          if (template.training_type === 'strength') {
+            await supabase
+              .from('strength_exercises')
+              .insert({
+                workout_plan_id: workoutPlan.id,
+                body_part: exercise.body_part || '',
+                exercise_name: exercise.exercise_name || '',
+                equipment: exercise.equipment || '',
+                sets: exercise.sets || 0,
+                reps: exercise.reps || 0,
+                weight: exercise.weight || null,
+                notes: exercise.notes || null,
+                order_index: exercise.order_index || 0,
+              })
+          } else if (template.training_type === 'cardio') {
+            await supabase
+              .from('cardio_exercises')
+              .insert({
+                workout_plan_id: workoutPlan.id,
+                exercise_type: exercise.exercise_type || '',
+                duration_minutes: exercise.duration_minutes || 0,
+                distance_km: exercise.distance_km || null,
+                calories_burned: exercise.calories_burned || null,
+                intensity_level: exercise.intensity_level || null,
+                notes: exercise.notes || null,
+              })
+          }
+        }
+      }
+
+      return res.status(201).json({ success: true, data: workoutPlan })
+    }
+
+    // GET /api/fitness/calendar?month=1&year=2025 - Get fitness calendar
+    if (req.method === 'GET' && action === 'calendar') {
+      const params = getQueryParams(req)
+      const month = parseInt(params.month || String(new Date().getMonth() + 1))
+      const year = parseInt(params.year || String(new Date().getFullYear()))
+
+      // Get all workout plans for the month
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+      const endDate = `${year}-${String(month).padStart(2, '0')}-31`
+
+      const { data: plans, error } = await supabase
+        .from('workout_plans')
+        .select('id, date_key, training_type, status, completed_at')
+        .eq('user_id', userId)
+        .gte('date_key', startDate)
+        .lte('date_key', endDate)
+        .order('date_key', { ascending: true })
+
+      if (error) throw error
+
+      return res.json({ success: true, data: plans || [] })
+    }
+
+    // GET /api/fitness/workout/[dateKey] - Get workout for specific date
+    if (req.method === 'GET' && action === 'workout' && id) {
+      const dateKey = id
+
+      const { data: plan, error: planError } = await supabase
+        .from('workout_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date_key', dateKey)
+        .single()
+
+      if (planError) {
+        return res.json({ success: true, data: null })
+      }
+
+      // Get exercises
+      let exercises: any = {}
+      if (plan.training_type === 'strength') {
+        const { data: strengthExercises } = await supabase
+          .from('strength_exercises')
+          .select('*')
+          .eq('workout_plan_id', plan.id)
+          .order('order_index', { ascending: true })
+
+        exercises = { strength: strengthExercises || [] }
+      } else if (plan.training_type === 'cardio') {
+        const { data: cardioExercises } = await supabase
+          .from('cardio_exercises')
+          .select('*')
+          .eq('workout_plan_id', plan.id)
+
+        exercises = { cardio: cardioExercises || [] }
+      }
+
+      return res.json({ success: true, data: { ...plan, exercises } })
+    }
+
+    // GET /api/fitness/exercise-history/[exerciseName]?training_type=strength - Get exercise history
+    if (req.method === 'GET' && action === 'exercise-history' && id) {
+      const exerciseName = decodeURIComponent(id)
+      const params = getQueryParams(req)
+      const trainingType = params.training_type as 'strength' | 'cardio'
+
+      if (!trainingType) {
+        return res.status(400).json({ error: 'training_type is required' })
+      }
+
+      // Get all workout plans that have this exercise
+      let tableName = trainingType === 'strength' ? 'strength_exercises' : 'cardio_exercises'
+      let columnName = trainingType === 'strength' ? 'exercise_name' : 'exercise_type'
+
+      const { data: exercises } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq(columnName, exerciseName)
+        .order('created_at', { ascending: false })
+
+      if (!exercises || exercises.length === 0) {
+        return res.json({ success: true, data: [] })
+      }
+
+      // Get the workout plans for these exercises
+      const planIds = exercises.map(e => e.workout_plan_id)
+      const { data: plans } = await supabase
+        .from('workout_plans')
+        .select('id, date_key')
+        .in('id', planIds)
+
+      // Combine the data
+      const history = exercises.map(exercise => {
+        const plan = plans?.find(p => p.id === exercise.workout_plan_id)
+        return {
+          ...exercise,
+          date_key: plan?.date_key,
+        }
+      }).sort((a, b) => (a.date_key > b.date_key ? -1 : 1))
+
+      return res.json({ success: true, data: history })
+    }
+
     return res.status(405).json({ error: 'Method not allowed' })
   } catch (error) {
     console.error('Fitness API error:', error)
