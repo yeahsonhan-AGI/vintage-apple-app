@@ -420,8 +420,25 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
   const downloadThumbnail = async () => {
     if (!selectedThumbnail) return
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
     try {
-      // Fetch the image as blob to avoid CORS issues
+      // For mobile, direct download often works better
+      if (isMobile) {
+        // Create a direct download link
+        const link = document.createElement('a')
+        link.href = selectedThumbnail.thumbnail
+        link.download = `youtube-thumbnail-${selectedThumbnail.id}.jpg`
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        setShowDownloadModal(false)
+        showToast('Opening image... Long press to save on mobile')
+        return
+      }
+
+      // For desktop, try fetch as blob first
       const response = await fetch(selectedThumbnail.thumbnail)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -440,10 +457,47 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
       showToast('Thumbnail downloaded!')
     } catch (error) {
       console.error('Download failed:', error)
-      // Fallback: Open in new tab
-      window.open(selectedThumbnail.thumbnail, '_blank')
-      setShowDownloadModal(false)
-      showToast('Opened in new tab (right-click to save)')
+      // Better fallback: Try canvas approach
+      try {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.src = selectedThumbnail.thumbnail
+
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+        })
+
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0)
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `youtube-thumbnail-${selectedThumbnail.id}.jpg`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+            setShowDownloadModal(false)
+            showToast('Thumbnail downloaded!')
+          }
+        })
+      } catch (canvasError) {
+        // Final fallback: Open in new tab with better message
+        setShowDownloadModal(false)
+        if (isMobile) {
+          showToast('Opening image... Long press and save image')
+        } else {
+          showToast('Opening image... Right-click and "Save image as"')
+        }
+        window.open(selectedThumbnail.thumbnail, '_blank')
+      }
     }
   }
 
@@ -498,8 +552,24 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
   const downloadGeneratedIcon = async () => {
     if (!generatedIcon) return
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
     try {
-      // Fetch the image as blob to avoid CORS issues
+      // For mobile, direct download often works better
+      if (isMobile) {
+        // Create a direct download link
+        const link = document.createElement('a')
+        link.href = generatedIcon
+        link.download = `q-draw-icon-${Date.now()}.png`
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        showToast('Opening image... Long press to save on mobile')
+        return
+      }
+
+      // For desktop, try fetch as blob first
       const response = await fetch(generatedIcon)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -507,7 +577,7 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
       // Create download link
       const link = document.createElement('a')
       link.href = url
-      link.download = `generated-icon-${Date.now()}.png`
+      link.download = `q-draw-icon-${Date.now()}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -517,9 +587,45 @@ export default function Desktop({ user, onSignOut }: DesktopProps) {
       showToast('Icon downloaded!')
     } catch (error) {
       console.error('Download failed:', error)
-      // Fallback: Open in new tab
-      window.open(generatedIcon, '_blank')
-      showToast('Opened in new tab (right-click to save)')
+      // Better fallback: Try canvas approach
+      try {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.src = generatedIcon
+
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+        })
+
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0)
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `q-draw-icon-${Date.now()}.png`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+            showToast('Icon downloaded!')
+          }
+        })
+      } catch (canvasError) {
+        // Final fallback: Open in new tab with better message
+        if (isMobile) {
+          showToast('Opening image... Long press and save image')
+        } else {
+          showToast('Opening image... Right-click and "Save image as"')
+        }
+        window.open(generatedIcon, '_blank')
+      }
     }
   }
 
